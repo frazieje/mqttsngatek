@@ -1,0 +1,32 @@
+plugins {
+    id 'java'
+}
+
+group 'net.farsystem'
+version '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.0'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.7.0'
+}
+
+test {
+    useJUnitPlatform()
+}
+
+task copyToLib(type: Copy) {
+    into "$buildDir/output/libs"
+    from configurations.runtime
+}
+
+task generateJniHeaders(type: Exec) {
+    def classpath = sourceSets.main.runtimeClasspath.asPath
+    commandLine "javah", "-d", "src", "-classpath", classpath, "net.farsystem.mqttsngatek.mqttsnclient.NativeMQTTSNClient"
+    dependsOn classes
+}
+
+build.dependsOn(copyToLib)

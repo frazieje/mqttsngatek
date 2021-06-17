@@ -91,3 +91,6 @@ Temporary Items
 
 err/
 log/
+
+mqttsnclient/build/
+mqttsnclient/libs/

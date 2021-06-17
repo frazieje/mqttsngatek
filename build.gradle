@@ -1,4 +1,5 @@
 plugins {
+    id 'java'
     id 'org.jetbrains.kotlin.jvm' version '1.4.21'
     id 'application'
 }
@@ -8,15 +9,25 @@ version '1.0-SNAPSHOT'
 
 repositories {
     mavenCentral()
+    maven {
+        url "https://www.spoohapps.com/artifactory/libs-release-local"
+        credentials {
+            username = artifactory_username
+            password = artifactory_password
+        }
+    }
 }
 
 dependencies {
-    implementation "org.jetbrains.kotlin:kotlin-stdlib"
-    implementation "org.glassfish.grizzly:grizzly-core:3.0.0"
+    testImplementation project(":mqttsnclient")
+    implementation 'org.jetbrains.kotlin:kotlin-stdlib'
+    implementation 'com.spoohapps:farcommon:0.10.0'
+    implementation 'org.glassfish.grizzly:grizzly-core:3.0.0'
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.6.0'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
 }
 
 test {
     useJUnitPlatform()
+    systemProperty "java.library.path", file("mqttsnclient/libs").absolutePath
 }
