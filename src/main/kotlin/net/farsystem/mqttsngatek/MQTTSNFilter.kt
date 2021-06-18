@@ -4,8 +4,12 @@ import org.glassfish.grizzly.Buffer
 import org.glassfish.grizzly.filterchain.BaseFilter
 import org.glassfish.grizzly.filterchain.FilterChainContext
 import org.glassfish.grizzly.filterchain.NextAction
+import org.glassfish.grizzly.memory.Buffers
+import org.slf4j.LoggerFactory
 
 class MQTTSNFilter : BaseFilter() {
+
+    private val logger = LoggerFactory.getLogger(this::class.java)
 
     override fun handleRead(ctx: FilterChainContext): NextAction {
 
@@ -39,7 +43,7 @@ class MQTTSNFilter : BaseFilter() {
         val byteBuffer = sourceBuffer.toByteBuffer()
 
         ctx.setMessage(when (MQTTSNMessageType.fromCode(packetType)) {
-            MQTTSNMessageType.SEARCHGW -> MQTTSNSearchGW.fromBuffer(byteBuffer)
+            MQTTSNMessageType.SEARCHGW -> MQTTSNSearchGw.fromBuffer(byteBuffer)
             MQTTSNMessageType.CONNECT -> MQTTSNConnect.fromBuffer(byteBuffer)
             MQTTSNMessageType.SUBSCRIBE -> MQTTSNSubscribe.fromBuffer(byteBuffer)
             MQTTSNMessageType.REGISTER -> MQTTSNRegister.fromBuffer(byteBuffer)
@@ -50,7 +54,11 @@ class MQTTSNFilter : BaseFilter() {
     }
 
     override fun handleWrite(ctx: FilterChainContext): NextAction {
-        return super.handleWrite(ctx)
+        val message = ctx.getMessage<MQTTSNMessage>()
+        val memoryManager = ctx.connection.transport.memoryManager
+        val buffer = Buffers.wrap(memoryManager, message.toBuffer())
+        ctx.setMessage(buffer.flip())
+        return ctx.invokeAction
     }
 
     companion object {

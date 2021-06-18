@@ -20,20 +20,26 @@ class GatewayTests {
     @BeforeAll
     fun setup() {
         val serverFilterChainBuilder = FilterChainBuilder.stateless()
-        serverFilterChainBuilder.add(TransportFilter())
-        serverFilterChainBuilder.add(MQTTSNFilter())
-        serverFilterChainBuilder.add(MQTTSNGatewayFilter())
+            .add(TransportFilter())
+            .add(MQTTSNFilter())
+            .add(MQTTSNGatewayFilter())
 
-        val serverTransport = UDPNIOTransportBuilder.newInstance().build()
-        serverTransport.processor = serverFilterChainBuilder.build()
+        val serverTransport = UDPNIOTransportBuilder.newInstance()
+            .setProcessor(serverFilterChainBuilder.build()).build()
+
         serverTransport.bind(10000)
         serverTransport.start()
 
-        val clientFilterChainBuilder = FilterChainBuilder.stateless()
-        clientFilterChainBuilder.add(TransportFilter())
-        val clientTransport = UDPNIOTransportBuilder.newInstance().build()
-        clientTransport.processor = clientFilterChainBuilder.build()
+        val clientFilterChain = FilterChainBuilder.stateless()
+            .add(TransportFilter())
+            .build()
+
+        val clientTransport = UDPNIOTransportBuilder.newInstance()
+            .setProcessor(clientFilterChain)
+            .build()
+
         clientTransport.start()
+
         cxn = clientTransport.connect("::1", 10000).get(1, TimeUnit.SECONDS)
     }
 
@@ -94,7 +100,7 @@ class GatewayTests {
     @Test
     fun `MQTTSN RegAck is processed`() {
         val client = NativeMQTTSNClient()
-        val bytes = client.serializeRegAck(3234,876,2)
+        val bytes = client.serializeRegAck(3234, 876, 2)
         val buf = Buffers.wrap(cxn.transport.memoryManager, bytes)
         cxn.write(buf)
         Thread.sleep(60000)

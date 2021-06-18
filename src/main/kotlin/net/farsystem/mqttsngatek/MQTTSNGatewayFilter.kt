@@ -3,30 +3,29 @@ package net.farsystem.mqttsngatek
 import org.glassfish.grizzly.filterchain.BaseFilter
 import org.glassfish.grizzly.filterchain.FilterChainContext
 import org.glassfish.grizzly.filterchain.NextAction
+import org.slf4j.LoggerFactory
 
 class MQTTSNGatewayFilter : BaseFilter() {
 
+    private val logger = LoggerFactory.getLogger(this::class.java)
+
     override fun handleRead(ctx: FilterChainContext): NextAction {
 
-        val message = ctx.getMessage<Any>()
+        val peerAddress = ctx.address
 
-        when (message) {
-            is MQTTSNSearchGW -> {
-                val radius = message.radius
-                val test = ""
+        when (val message = ctx.getMessage<Any>()) {
+            is MQTTSNSearchGw -> {
+                logger.debug("SEARCHGW Received with radius ${message.radius}")
+                val gwInfo = MQTTSNGwInfo(124, ctx.connection.localAddress.toString())
+                ctx.write(peerAddress, gwInfo, null)
             }
             is MQTTSNRegister -> {
-                val test = message.topic
-                val test2 = ""
             }
             is MQTTSNSubscribe -> {
-                val test = ""
             }
             is MQTTSNConnect -> {
-                val test = ""
             }
             is MQTTSNRegAck -> {
-                val test = ""
             }
         }
 

@@ -19,15 +19,18 @@ repositories {
 }
 
 dependencies {
-    testImplementation project(":mqttsnclient")
+    implementation 'org.slf4j:slf4j-api:1.7.30'
+    implementation 'ch.qos.logback:logback-classic:1.2.3'
     implementation 'org.jetbrains.kotlin:kotlin-stdlib'
     implementation 'com.spoohapps:farcommon:0.10.0'
     implementation 'org.glassfish.grizzly:grizzly-core:3.0.0'
+
+    testImplementation project(":mqttsnclient")
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.6.0'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
 }
 
 test {
     useJUnitPlatform()
-    systemProperty "java.library.path", file("mqttsnclient/libs").absolutePath
+    systemProperty "java.library.path", file("mqttsnclient/build/native").absolutePath
 }
