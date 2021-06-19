@@ -10,7 +10,7 @@ data class MQTTSNSubscribe(
     val topicType: MQTTSNTopicType,
     val topic: String?,
     val topicId: Int?
-) {
+): MQTTSNMessage {
     companion object {
         fun fromBuffer(buffer: ByteBuffer): MQTTSNSubscribe {
             val flags = buffer.get().toInt() and 0xFF
@@ -30,5 +30,9 @@ data class MQTTSNSubscribe(
                 }
             }
         }
+    }
+
+    override fun toBuffer(): ByteBuffer {
+        TODO("Not yet implemented")
     }
 }

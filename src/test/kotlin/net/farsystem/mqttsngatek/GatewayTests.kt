@@ -1,37 +1,51 @@
 package net.farsystem.mqttsngatek
 
 import net.farsystem.mqttsngatek.mqttsnclient.NativeMQTTSNClient
+import org.glassfish.grizzly.Buffer
+import org.glassfish.grizzly.CompletionHandler
 import org.glassfish.grizzly.Connection
+import org.glassfish.grizzly.WriteResult
 import org.glassfish.grizzly.filterchain.FilterChainBuilder
 import org.glassfish.grizzly.filterchain.TransportFilter
+import org.glassfish.grizzly.impl.FutureImpl
 import org.glassfish.grizzly.memory.Buffers
+import org.glassfish.grizzly.nio.transport.UDPNIOConnection
 import org.glassfish.grizzly.nio.transport.UDPNIOTransportBuilder
+import org.glassfish.grizzly.utils.Futures
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
+import java.net.InetSocketAddress
+import java.net.NetworkInterface
+import java.net.SocketAddress
 import java.util.concurrent.TimeUnit
 
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class GatewayTests {
 
-    lateinit var cxn: Connection<*>
+    lateinit var cxn: UDPNIOConnection
 
     @BeforeAll
     fun setup() {
+
+
         val serverFilterChainBuilder = FilterChainBuilder.stateless()
             .add(TransportFilter())
             .add(MQTTSNFilter())
             .add(MQTTSNGatewayFilter())
 
-        val serverTransport = UDPNIOTransportBuilder.newInstance()
-            .setProcessor(serverFilterChainBuilder.build()).build()
+        NetworkInterface.getByName("enp0s25").inetAddresses.toList().forEach {
+            val serverTransport = UDPNIOTransportBuilder.newInstance()
+                .setProcessor(serverFilterChainBuilder.build()).build()
 
-        serverTransport.bind(10000)
-        serverTransport.start()
+            serverTransport.bind(InetSocketAddress(it, 10000))
+            serverTransport.start()
+        }
 
         val clientFilterChain = FilterChainBuilder.stateless()
             .add(TransportFilter())
+            .add(CaptureFilter())
             .build()
 
         val clientTransport = UDPNIOTransportBuilder.newInstance()
@@ -40,7 +54,7 @@ class GatewayTests {
 
         clientTransport.start()
 
-        cxn = clientTransport.connect("::1", 10000).get(1, TimeUnit.SECONDS)
+        cxn = clientTransport.connect("::1", 10000).get(1, TimeUnit.SECONDS) as UDPNIOConnection
     }
 
     @Test
@@ -92,9 +106,9 @@ class GatewayTests {
     fun `MQTTSN SearchGW is processed`() {
         val client = NativeMQTTSNClient()
         val bytes = client.serializeSearchGW(5)
-        val buf = Buffers.wrap(cxn.transport.memoryManager, bytes)
-        cxn.write(buf)
-        Thread.sleep(60000)
+//        val buf = Buffers.wrap(cxn.transport.memoryManager, bytes)
+//        cxn.write(buf)
+        Thread.sleep(120000)
     }
 
     @Test

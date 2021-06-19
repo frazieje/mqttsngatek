@@ -9,7 +9,7 @@ data class MQTTSNConnect(
     val protocolId: Int = 1,
     val duration: Int,
     val clientId: String
-) {
+): MQTTSNMessage {
     companion object {
         fun fromBuffer(buffer: ByteBuffer): MQTTSNConnect {
             val flags = buffer.get().toInt() and 0xFF
@@ -22,5 +22,9 @@ data class MQTTSNConnect(
             val clientId = String(bytes, StandardCharsets.UTF_8)
             return MQTTSNConnect(cleanSession, willFlag, protocolId, duration, clientId)
         }
+    }
+
+    override fun toBuffer(): ByteBuffer {
+        TODO("Not yet implemented")
     }
 }
