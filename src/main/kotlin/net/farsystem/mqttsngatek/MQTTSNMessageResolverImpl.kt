@@ -31,7 +31,7 @@ class MQTTSNMessageResolverImpl: MQTTSNMessageResolver {
         val header = object : MQTTSNHeader {
             override val messageLength: Int
                 get() = messageLength
-            override val messagteType: MQTTSNMessageType
+            override val messageType: MQTTSNMessageType
                 get() = type
             override fun toBuffer(): ByteBuffer {
                 return if (messageLength <= 255) {

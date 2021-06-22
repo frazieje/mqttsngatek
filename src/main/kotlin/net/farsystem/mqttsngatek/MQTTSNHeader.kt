@@ -4,6 +4,6 @@ import java.nio.ByteBuffer
 
 interface MQTTSNHeader {
     val messageLength: Int
-    val messagteType: MQTTSNMessageType
+    val messageType: MQTTSNMessageType
     fun toBuffer(): ByteBuffer
 }

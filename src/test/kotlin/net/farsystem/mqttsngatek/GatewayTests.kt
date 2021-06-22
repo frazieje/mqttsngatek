@@ -29,19 +29,17 @@ class GatewayTests {
     @BeforeAll
     fun setup() {
 
+        val mqttsnMessageResolver = MQTTSNMessageResolverImpl()
 
         val serverFilterChainBuilder = FilterChainBuilder.stateless()
             .add(TransportFilter())
-            .add(MQTTSNFilter())
+            .add(MQTTSNFilter(mqttsnMessageResolver))
             .add(MQTTSNGatewayFilter())
 
-        NetworkInterface.getByName("enp0s25").inetAddresses.toList().forEach {
-            val serverTransport = UDPNIOTransportBuilder.newInstance()
-                .setProcessor(serverFilterChainBuilder.build()).build()
-
-            serverTransport.bind(InetSocketAddress(it, 10000))
-            serverTransport.start()
-        }
+        val serverTransport = UDPNIOTransportBuilder.newInstance()
+            .setProcessor(serverFilterChainBuilder.build()).build()
+        serverTransport.bind("::", 10000)
+        serverTransport.start()
 
         val clientFilterChain = FilterChainBuilder.stateless()
             .add(TransportFilter())
@@ -106,8 +104,8 @@ class GatewayTests {
     fun `MQTTSN SearchGW is processed`() {
         val client = NativeMQTTSNClient()
         val bytes = client.serializeSearchGW(5)
-//        val buf = Buffers.wrap(cxn.transport.memoryManager, bytes)
-//        cxn.write(buf)
+        val buf = Buffers.wrap(cxn.transport.memoryManager, bytes)
+        cxn.write(buf)
         Thread.sleep(120000)
     }
 

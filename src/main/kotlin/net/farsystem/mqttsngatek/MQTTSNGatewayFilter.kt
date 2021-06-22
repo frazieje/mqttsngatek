@@ -21,7 +21,7 @@ class MQTTSNGatewayFilter() : BaseFilter() {
 
         val localAddress = (cxn.localAddress as InetSocketAddress).address.hostAddress
 
-        when (val message = ctx.getMessage<Any>()) {
+        when (val message = ctx.getMessage<MQTTSNPacket>().message) {
             is MQTTSNSearchGw -> {
                 logger.debug("SEARCHGW Received with radius ${message.radius}")
                 val gwInfo = MQTTSNGwInfo(124, localAddress)

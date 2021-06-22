@@ -24,9 +24,11 @@ class Gateway {
 
             val transport = UDPNIOTransportBuilder.newInstance().build()
 
+            val resolver: MQTTSNMessageResolver = MQTTSNMessageResolverImpl()
+
             transport.processor = FilterChainBuilder.stateless()
                 .add(TransportFilter())
-                .add(MQTTSNFilter())
+                .add(MQTTSNFilter(resolver))
                 .build()
 
             try {

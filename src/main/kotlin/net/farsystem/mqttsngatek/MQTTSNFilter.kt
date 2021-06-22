@@ -27,9 +27,11 @@ class MQTTSNFilter(val mqttsnMessageResolver: MQTTSNMessageResolver) : BaseFilte
             return ctx.getStopAction(sourceBuffer)
         }
 
-        val messageLength = packet.header.messageLength
+        ctx.setMessage(packet)
 
-        val remainder = if (sourceBufferLength > messageLength) sourceBuffer.split(messageLength) else sourceBuffer.split(messageLength) else null
+        val packetLength = packet.length()
+
+        val remainder = if (sourceBufferLength > packetLength) sourceBuffer.split(packetLength) else null
 
         sourceBuffer.tryDispose()
 
