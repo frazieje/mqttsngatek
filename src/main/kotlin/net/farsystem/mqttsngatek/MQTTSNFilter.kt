@@ -7,7 +7,7 @@ import org.glassfish.grizzly.filterchain.NextAction
 import org.glassfish.grizzly.memory.Buffers
 import org.slf4j.LoggerFactory
 
-class MQTTSNFilter(val mqttsnMessageResolver: MQTTSNMessageResolver) : BaseFilter() {
+class MQTTSNFilter(val mqttsnMessageHandler: MQTTSNMessageHandler) : BaseFilter() {
 
     private val logger = LoggerFactory.getLogger(this::class.java)
 
@@ -21,15 +21,16 @@ class MQTTSNFilter(val mqttsnMessageResolver: MQTTSNMessageResolver) : BaseFilte
 
         val sourceByteBuffer = sourceBuffer.toByteBuffer()
 
-        val packet = try {
-            mqttsnMessageResolver.resolve(sourceByteBuffer)
+        val message = try {
+            mqttsnMessageHandler.decode(sourceByteBuffer)
         } catch (e: ByteBufferTooShortException) {
+            logger.error("Error processing message", e)
             return ctx.getStopAction(sourceBuffer)
         }
 
-        ctx.setMessage(packet)
+        ctx.setMessage(message)
 
-        val packetLength = packet.length()
+        val packetLength = message.length()
 
         val remainder = if (sourceBufferLength > packetLength) sourceBuffer.split(packetLength) else null
 
@@ -42,7 +43,11 @@ class MQTTSNFilter(val mqttsnMessageResolver: MQTTSNMessageResolver) : BaseFilte
         logger.debug("server write")
         val message = ctx.getMessage<MQTTSNMessage>()
         val memoryManager = ctx.connection.transport.memoryManager
-        val buffer = Buffers.wrap(memoryManager, message.toBuffer().flip())
+        val buffer =
+            Buffers.wrap(
+                memoryManager,
+                message.writeTo(memoryManager.allocate(message.length()).toByteBuffer()).flip()
+            )
         buffer.allowBufferDispose(true)
         ctx.setMessage(buffer)
         return ctx.invokeAction

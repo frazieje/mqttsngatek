@@ -233,3 +233,44 @@ JNIEXPORT jobject JNICALL Java_net_farsystem_mqttsngatek_mqttsnclient_NativeMQTT
     return buffer;
 
 }
+
+JNIEXPORT jobject JNICALL Java_net_farsystem_mqttsngatek_mqttsnclient_NativeMQTTSNClient_deserializeMQTTSNGwInfo
+  (JNIEnv *env, jobject thisObj, jobject byteBuffer) {
+
+    jclass cls_ByteBuffer = (*env)->GetObjectClass(env, byteBuffer);
+
+    jmethodID limit = (*env)->GetMethodID(env, cls_ByteBuffer, "limit", "()I");
+    jmethodID getBA = (*env)->GetMethodID(env, cls_ByteBuffer, "get", "([B)Ljava/nio/ByteBuffer;");
+
+    int len = (int)(*env)->CallIntMethod(env, byteBuffer, limit);
+
+    jbyteArray bytes = (jbyteArray)(*env)->NewByteArray(env, len);
+
+    jobject obj_ByteBuffer = (*env)->CallObjectMethod(env, byteBuffer, getBA, bytes);
+
+    unsigned char buf[len];
+
+    (*env)->GetByteArrayRegion(env, bytes, 0, len, buf);
+
+    unsigned char gatewayId;
+    unsigned short gatewayAddressLen;
+    unsigned char *gatewayAddress;
+
+    int rc = MQTTSNDeserialize_gwinfo(&gatewayId, &gatewayAddressLen, &gatewayAddress, buf, len);
+
+    buf[len] = '\0';
+
+    printf("gatewayid = %d, limit = %d", buf[0], len);
+    fflush(stdout);
+
+    (*env)->DeleteLocalRef(env, bytes);
+
+    jclass cls_gwinfo = (*env)->FindClass(env, "net/farsystem/mqttsngatek/mqttsnclient/MQTTSNGwInfo");
+    jmethodID cnstr_gwinfo = (*env)->GetMethodID(env, cls_gwinfo, "<init>", "(ILjava/lang/String;)V");
+
+    jstring gwaddress = (*env)->NewStringUTF(env, gatewayAddress);
+
+    jobject obj_gwinfo = (*env)->NewObject(env, cls_gwinfo, cnstr_gwinfo, (int)gatewayId, gwaddress);
+
+    return obj_gwinfo;
+}

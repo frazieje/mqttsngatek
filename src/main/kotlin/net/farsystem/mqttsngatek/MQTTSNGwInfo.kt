@@ -6,7 +6,7 @@ import java.nio.charset.StandardCharsets
 data class MQTTSNGwInfo(
     val gatewayId: Int,
     val gatewayAddress: String?
-): MQTTSNMessage {
+): MQTTSNBody {
     companion object {
         fun fromBuffer(buffer: ByteBuffer): MQTTSNGwInfo {
             val gatewayId = buffer.get().toInt() and 0xFF
@@ -19,11 +19,14 @@ data class MQTTSNGwInfo(
         }
     }
 
-    override fun toBuffer(): ByteBuffer {
+    override fun writeTo(buffer: ByteBuffer): ByteBuffer {
         val address = gatewayAddress?.toByteArray(StandardCharsets.UTF_8)
-        val buffer = ByteBuffer.allocate(1 + (address?.size ?: 0))
         buffer.put(gatewayId.toByte())
-        buffer.put(address)
+        address?.run {
+            buffer.put(address)
+        }
         return buffer
     }
+
+    override fun length(): Int = 1 + (gatewayAddress?.toByteArray(StandardCharsets.UTF_8)?.size ?: 0)
 }

@@ -1,23 +1,15 @@
 package net.farsystem.mqttsngatek
 
 import net.farsystem.mqttsngatek.mqttsnclient.NativeMQTTSNClient
-import org.glassfish.grizzly.Buffer
-import org.glassfish.grizzly.CompletionHandler
-import org.glassfish.grizzly.Connection
-import org.glassfish.grizzly.WriteResult
 import org.glassfish.grizzly.filterchain.FilterChainBuilder
 import org.glassfish.grizzly.filterchain.TransportFilter
-import org.glassfish.grizzly.impl.FutureImpl
 import org.glassfish.grizzly.memory.Buffers
 import org.glassfish.grizzly.nio.transport.UDPNIOConnection
 import org.glassfish.grizzly.nio.transport.UDPNIOTransportBuilder
-import org.glassfish.grizzly.utils.Futures
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
-import java.net.InetSocketAddress
-import java.net.NetworkInterface
-import java.net.SocketAddress
 import java.util.concurrent.TimeUnit
 
 
@@ -26,15 +18,17 @@ class GatewayTests {
 
     lateinit var cxn: UDPNIOConnection
 
+    private  val mqttsnMessageResolver = MQTTSNMessageHandlerImpl()
+
+    private val captureFilter: CaptureFilter = CaptureFilter(mqttsnMessageResolver)
+
     @BeforeAll
     fun setup() {
-
-        val mqttsnMessageResolver = MQTTSNMessageResolverImpl()
 
         val serverFilterChainBuilder = FilterChainBuilder.stateless()
             .add(TransportFilter())
             .add(MQTTSNFilter(mqttsnMessageResolver))
-            .add(MQTTSNGatewayFilter())
+            .add(MQTTSNGatewayFilter(mqttsnMessageResolver, 123))
 
         val serverTransport = UDPNIOTransportBuilder.newInstance()
             .setProcessor(serverFilterChainBuilder.build()).build()
@@ -43,7 +37,7 @@ class GatewayTests {
 
         val clientFilterChain = FilterChainBuilder.stateless()
             .add(TransportFilter())
-            .add(CaptureFilter())
+            .add(captureFilter)
             .build()
 
         val clientTransport = UDPNIOTransportBuilder.newInstance()
@@ -106,7 +100,11 @@ class GatewayTests {
         val bytes = client.serializeSearchGW(5)
         val buf = Buffers.wrap(cxn.transport.memoryManager, bytes)
         cxn.write(buf)
-        Thread.sleep(120000)
+        Thread.sleep(100)
+        val response = captureFilter.getReadQueue().single()
+        val respBuffer = response.toByteBuffer()
+        val gwinfo = client.deserializeMQTTSNGwInfo(respBuffer)
+        assertEquals(gwinfo.id)
     }
 
     @Test

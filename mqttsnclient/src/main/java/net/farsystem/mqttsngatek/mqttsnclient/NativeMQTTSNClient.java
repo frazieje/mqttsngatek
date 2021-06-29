@@ -29,4 +29,7 @@ public class NativeMQTTSNClient implements MQTTSNClient {
     @Override
     public native ByteBuffer serializeRegAck(int topicId, int messageId, int returnCode);
 
+    @Override
+    public native MQTTSNGwInfo deserializeMQTTSNGwInfo(ByteBuffer buffer);
+
 }

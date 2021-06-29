@@ -4,10 +4,13 @@ import com.spoohapps.farcommon.config.ConfigFlags
 
 interface GatewayConfig {
 
-    @ConfigFlags("serverPort")
-    fun serverPort(): Int
+    @ConfigFlags("port")
+    fun port(): Int
 
-    @ConfigFlags("serverAddress")
-    fun serverAddress(): String
+    @ConfigFlags("networkInterface")
+    fun networkInterface(): String
+
+    @ConfigFlags("gatewayId")
+    fun gatewayId(): Int
 
 }

@@ -10,4 +10,5 @@ public interface MQTTSNClient {
     ByteBuffer serializeRegister(int topicId, int messageId, String topic);
     ByteBuffer serializeSearchGW(int radius);
     ByteBuffer serializeRegAck(int topicId, int messageId, int returnCode);
+    MQTTSNGwInfo deserializeMQTTSNGwInfo(ByteBuffer buffer);
 }

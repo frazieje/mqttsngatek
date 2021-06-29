@@ -63,6 +63,14 @@ JNIEXPORT jobject JNICALL Java_net_farsystem_mqttsngatek_mqttsnclient_NativeMQTT
 JNIEXPORT jobject JNICALL Java_net_farsystem_mqttsngatek_mqttsnclient_NativeMQTTSNClient_serializeRegAck
   (JNIEnv *, jobject, jint, jint, jint);
 
+/*
+ * Class:     net_farsystem_mqttsngatek_mqttsnclient_NativeMQTTSNClient
+ * Method:    deserializeMQTTSNGwInfo
+ * Signature: (Ljava/nio/ByteBuffer;)Lnet/farsystem/mqttsngatek/mqttsnclient/MQTTSNGwInfo;
+ */
+JNIEXPORT jobject JNICALL Java_net_farsystem_mqttsngatek_mqttsnclient_NativeMQTTSNClient_deserializeMQTTSNGwInfo
+  (JNIEnv *, jobject, jobject);
+
 #ifdef __cplusplus
 }
 #endif

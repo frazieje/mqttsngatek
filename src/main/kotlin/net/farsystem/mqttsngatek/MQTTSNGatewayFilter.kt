@@ -1,15 +1,12 @@
 package net.farsystem.mqttsngatek
 
-import org.glassfish.grizzly.CompletionHandler
 import org.glassfish.grizzly.filterchain.BaseFilter
 import org.glassfish.grizzly.filterchain.FilterChainContext
 import org.glassfish.grizzly.filterchain.NextAction
 import org.slf4j.LoggerFactory
-import java.net.Inet6Address
-import java.net.InetAddress
 import java.net.InetSocketAddress
 
-class MQTTSNGatewayFilter() : BaseFilter() {
+class MQTTSNGatewayFilter(val mqttsnMessageHandler: MQTTSNMessageHandler, val gatewayId: Int) : BaseFilter() {
 
     private val logger = LoggerFactory.getLogger(this::class.java)
 
@@ -19,21 +16,32 @@ class MQTTSNGatewayFilter() : BaseFilter() {
 
         val cxn = ctx.connection
 
-        val localAddress = (cxn.localAddress as InetSocketAddress).address.hostAddress
+        val hostAddress = (cxn.localAddress as InetSocketAddress).address.hostAddress
+        val localAddress = if (hostAddress.contains('%'))
+            hostAddress.substring(0, hostAddress.indexOf('%'))
+        else
+            hostAddress
 
-        when (val message = ctx.getMessage<MQTTSNPacket>().message) {
-            is MQTTSNSearchGw -> {
-                logger.debug("SEARCHGW Received with radius ${message.radius}")
-                val gwInfo = MQTTSNGwInfo(124, localAddress)
-                ctx.write(peerAddress, gwInfo, null)
+        val message = ctx.getMessage<MQTTSNMessage>()
+
+        when (message.header.messageType) {
+            MQTTSNMessageType.SEARCHGW -> {
+                val searchGw = message.body as MQTTSNSearchGw
+                logger.debug("SEARCHGW Received with radius ${searchGw.radius}")
+                val response =
+                    mqttsnMessageHandler.createMessage(
+                        MQTTSNMessageType.GWINFO,
+                        MQTTSNGwInfo(gatewayId, localAddress)
+                    )
+                ctx.write(peerAddress, response, null)
             }
-            is MQTTSNRegister -> {
+            MQTTSNMessageType.CONNECT -> {
             }
-            is MQTTSNSubscribe -> {
+            MQTTSNMessageType.SUBSCRIBE -> {
             }
-            is MQTTSNConnect -> {
+            MQTTSNMessageType.REGISTER -> {
             }
-            is MQTTSNRegAck -> {
+            MQTTSNMessageType.REGACK -> {
             }
         }
 

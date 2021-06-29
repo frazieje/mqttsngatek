@@ -10,7 +10,7 @@ data class MQTTSNSubscribe(
     val topicType: MQTTSNTopicType,
     val topic: String?,
     val topicId: Int?
-): MQTTSNMessage {
+): MQTTSNBody {
     companion object {
         fun fromBuffer(buffer: ByteBuffer): MQTTSNSubscribe {
             val flags = buffer.get().toInt() and 0xFF
@@ -32,7 +32,34 @@ data class MQTTSNSubscribe(
         }
     }
 
-    override fun toBuffer(): ByteBuffer {
-        TODO("Not yet implemented")
+    override fun writeTo(buffer: ByteBuffer): ByteBuffer {
+        var flags = 0x0
+        if(dup)
+            flags = flags or 0x80
+        flags = flags or (qos.code shl 5)
+        flags = flags or topicType.code
+        buffer
+            .put(flags.toByte())
+            .putShort(messageId.toShort())
+        when (topicType) {
+            MQTTSNTopicType.NORMAL, MQTTSNTopicType.SHORT_NAME -> {
+                buffer.put(topic!!.toByteArray(StandardCharsets.UTF_8))
+            }
+            MQTTSNTopicType.PREDEFINED -> {
+                buffer.putShort(topicId!!.toShort())
+            }
+        }
+        return buffer
     }
+
+    override fun length(): Int = 3 + when (topicType) {
+        MQTTSNTopicType.NORMAL, MQTTSNTopicType.SHORT_NAME -> {
+            topic!!.toByteArray(StandardCharsets.UTF_8).size
+        }
+        MQTTSNTopicType.PREDEFINED -> {
+            2
+        }
+    }
+
+
 }

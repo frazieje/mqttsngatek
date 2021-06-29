@@ -6,7 +6,7 @@ class MQTTSNRegAck(
     val topicId: Int,
     val messageId: Int,
     val returnCode: MQTTSNReturnCode
-): MQTTSNMessage {
+): MQTTSNBody {
     companion object {
         fun fromBuffer(buffer: ByteBuffer): MQTTSNRegAck {
             val topicId = buffer.short.toInt() and 0xFFFF
@@ -16,7 +16,13 @@ class MQTTSNRegAck(
         }
     }
 
-    override fun toBuffer(): ByteBuffer {
-        TODO("Not yet implemented")
+    override fun writeTo(buffer: ByteBuffer): ByteBuffer {
+        return buffer
+            .putShort(topicId.toShort())
+            .putShort(messageId.toShort())
+            .put(returnCode.code.toByte())
     }
+
+    override fun length(): Int = 5
+
 }
