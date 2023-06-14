@@ -2,7 +2,7 @@ package net.farsystem.mqttsngatek
 
 import java.nio.ByteBuffer
 
-class MQTTSNMessageHandlerImpl: MQTTSNMessageHandler {
+class MQTTSNMessagBuilderImpl: MQTTSNMessagBuilder {
 
     override fun decode(buffer: ByteBuffer): MQTTSNMessage {
         val bufferLength = buffer.remaining()
@@ -48,6 +48,8 @@ class MQTTSNMessageHandlerImpl: MQTTSNMessageHandler {
             MQTTSNMessageType.REGISTER to (MQTTSNRegister)::fromBuffer,
             MQTTSNMessageType.REGACK to (MQTTSNRegAck)::fromBuffer,
             MQTTSNMessageType.GWINFO to (MQTTSNGwInfo)::fromBuffer,
+            MQTTSNMessageType.PINGREQ to (MQTTSNPingReq)::fromBuffer,
+            MQTTSNMessageType.PINGRESP to (MQTTSNPingResp)::fromBuffer,
         )
     }
 }

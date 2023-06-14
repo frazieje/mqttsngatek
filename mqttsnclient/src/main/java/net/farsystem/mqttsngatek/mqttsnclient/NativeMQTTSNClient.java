@@ -30,6 +30,15 @@ public class NativeMQTTSNClient implements MQTTSNClient {
     public native ByteBuffer serializeRegAck(int topicId, int messageId, int returnCode);
 
     @Override
-    public native MQTTSNGwInfo deserializeMQTTSNGwInfo(ByteBuffer buffer);
+    public native ByteBuffer serializePingReq(String clientId);
+
+    @Override
+    public native MQTTSNPingResp deserializePingResp(ByteBuffer buffer);
+
+    @Override
+    public native MQTTSNGwInfo deserializeGwInfo(ByteBuffer buffer);
+
+    @Override
+    public native MQTTSNConnAck deserializeConnAck(ByteBuffer buffer);
 
 }

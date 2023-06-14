@@ -5,28 +5,29 @@ import org.glassfish.grizzly.filterchain.BaseFilter
 import org.glassfish.grizzly.filterchain.FilterChainContext
 import org.glassfish.grizzly.filterchain.NextAction
 import org.slf4j.LoggerFactory
-import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.BlockingDeque
+import java.util.concurrent.LinkedBlockingDeque
 
 
-class CaptureFilter(val handler: MQTTSNMessageHandler) : BaseFilter() {
+class CaptureFilter : BaseFilter() {
 
     private val logger = LoggerFactory.getLogger(this::class.java)
 
-    private val readQueue = CopyOnWriteArrayList<Buffer>()
+    private val readQueue = LinkedBlockingDeque<Buffer>()
 
-    private val writeQueue = CopyOnWriteArrayList<Buffer>()
+    private val writeQueue = LinkedBlockingDeque<Buffer>()
 
     override fun handleRead(ctx: FilterChainContext): NextAction {
         logger.debug("read message")
         val message = ctx.getMessage<Buffer>()
-        readQueue.add(message)
+        readQueue.putLast(message)
         return ctx.invokeAction
     }
 
     override fun handleWrite(ctx: FilterChainContext): NextAction {
         logger.debug("write message")
         val message = ctx.getMessage<Buffer>()
-        writeQueue.add(message)
+        writeQueue.putLast(message)
         return ctx.invokeAction
     }
 
@@ -40,12 +41,12 @@ class CaptureFilter(val handler: MQTTSNMessageHandler) : BaseFilter() {
         return ctx.stopAction
     }
 
-    fun getReadQueue(): List<Buffer> {
-        return ArrayList<Buffer>(readQueue)
+    fun getReadDeque(): BlockingDeque<Buffer> {
+        return readQueue
     }
 
-    fun getWriteQueue(): List<Buffer> {
-        return ArrayList<Buffer>(writeQueue)
+    fun getWriteDeque(): BlockingDeque<Buffer> {
+        return writeQueue
     }
 
     fun recycle() {

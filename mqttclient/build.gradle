@@ -1,0 +1,60 @@
+import org.gradle.internal.os.OperatingSystem
+
+plugins {
+    id 'java'
+}
+
+group 'net.farsystem'
+version '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.0'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.7.0'
+}
+
+test {
+    useJUnitPlatform()
+}
+
+task copyToLib(type: Copy) {
+    into "$buildDir/output/libs"
+    from configurations.runtime
+}
+
+compileJava {
+    options.compilerArgs += ["-h", file("src/main/jni/include")]
+}
+
+task compileJNI {
+    dependsOn compileJava
+
+    String platform
+
+    if (OperatingSystem.current().isLinux()) {
+        platform = 'linux'
+    } else if (OperatingSystem.current().isMacOsX()) {
+        platform = 'darwin'
+    }
+
+    doLast {
+        exec {
+            commandLine 'sh', '-c', 'mkdir -p build/native && cd src/main/jni && make PLATFORM=' + platform
+        }
+    }
+}
+
+clean.doFirst {
+    delete fileTree('src/main/jni/include') {
+        include '*.h'
+    }
+}
+
+processResources {
+    dependsOn compileJNI
+}
+
+build.dependsOn(copyToLib)

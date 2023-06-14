@@ -1,3 +1,6 @@
 [submodule "mqttsnclient/paho.mqtt-sn.embedded-c"]
 	path = mqttsnclient/paho.mqtt-sn.embedded-c
 	url = git@github.com:eclipse/paho.mqtt-sn.embedded-c.git
+[submodule "mqttclient/paho.mqtt.c"]
+	path = mqttclient/paho.mqtt.c
+	url = git@github.com:eclipse/paho.mqtt.c.git

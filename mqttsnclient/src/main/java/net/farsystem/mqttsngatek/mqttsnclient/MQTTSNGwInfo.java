@@ -1,8 +1,8 @@
 package net.farsystem.mqttsngatek.mqttsnclient;
 
 public class MQTTSNGwInfo {
-    private int id;
-    private String address;
+    private final int id;
+    private final String address;
     public MQTTSNGwInfo(int id, String address) {
         this.id = id;
         this.address = address;

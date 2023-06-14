@@ -7,7 +7,7 @@ import org.glassfish.grizzly.filterchain.NextAction
 import org.glassfish.grizzly.memory.Buffers
 import org.slf4j.LoggerFactory
 
-class MQTTSNFilter(val mqttsnMessageHandler: MQTTSNMessageHandler) : BaseFilter() {
+class MQTTSNFilter(val mqttsnMessagBuilder: MQTTSNMessagBuilder) : BaseFilter() {
 
     private val logger = LoggerFactory.getLogger(this::class.java)
 
@@ -22,7 +22,7 @@ class MQTTSNFilter(val mqttsnMessageHandler: MQTTSNMessageHandler) : BaseFilter(
         val sourceByteBuffer = sourceBuffer.toByteBuffer()
 
         val message = try {
-            mqttsnMessageHandler.decode(sourceByteBuffer)
+            mqttsnMessagBuilder.decode(sourceByteBuffer)
         } catch (e: ByteBufferTooShortException) {
             logger.error("Error processing message", e)
             return ctx.getStopAction(sourceBuffer)

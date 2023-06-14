@@ -2,6 +2,7 @@
 <project version="4">
   <component name="VcsDirectoryMappings">
     <mapping directory="" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/mqttclient/paho.mqtt.c" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/mqttsnclient/paho.mqtt-sn.embedded-c" vcs="Git" />
   </component>
 </project>

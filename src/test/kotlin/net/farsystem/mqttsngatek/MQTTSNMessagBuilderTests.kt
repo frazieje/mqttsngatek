@@ -7,9 +7,9 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import java.nio.ByteBuffer
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class MQTTSNMessageHandlerTests {
+class MQTTSNMessagBuilderTests {
 
-    private val handler: MQTTSNMessageHandler = MQTTSNMessageHandlerImpl()
+    private val builder: MQTTSNMessagBuilder = MQTTSNMessagBuilderImpl()
     private val client = NativeMQTTSNClient()
 
     private lateinit var mqttSnSearchGwMessage: MQTTSNMessage
@@ -28,10 +28,10 @@ class MQTTSNMessageHandlerTests {
     @BeforeAll
     fun setup() {
         mqttSnConnectBytes = client.serializeConnect(expectedClientId, expectedDuration, expectedCleanSession, expectedWillFlag)
-        mqttSnConnectMessage = handler.decode(mqttSnConnectBytes)
+        mqttSnConnectMessage = builder.decode(mqttSnConnectBytes)
 
         mqttSnSearchGwBytes = client.serializeSearchGW(expectedRadius)
-        mqttSnSearchGwMessage = handler.decode(mqttSnSearchGwBytes)
+        mqttSnSearchGwMessage = builder.decode(mqttSnSearchGwBytes)
     }
 
     /* MQTTSN SearchGW */

@@ -65,10 +65,34 @@ JNIEXPORT jobject JNICALL Java_net_farsystem_mqttsngatek_mqttsnclient_NativeMQTT
 
 /*
  * Class:     net_farsystem_mqttsngatek_mqttsnclient_NativeMQTTSNClient
- * Method:    deserializeMQTTSNGwInfo
+ * Method:    serializePingReq
+ * Signature: (Ljava/lang/String;)Ljava/nio/ByteBuffer;
+ */
+JNIEXPORT jobject JNICALL Java_net_farsystem_mqttsngatek_mqttsnclient_NativeMQTTSNClient_serializePingReq
+  (JNIEnv *, jobject, jstring);
+
+/*
+ * Class:     net_farsystem_mqttsngatek_mqttsnclient_NativeMQTTSNClient
+ * Method:    deserializePingResp
+ * Signature: (Ljava/nio/ByteBuffer;)Lnet/farsystem/mqttsngatek/mqttsnclient/MQTTSNPingResp;
+ */
+JNIEXPORT jobject JNICALL Java_net_farsystem_mqttsngatek_mqttsnclient_NativeMQTTSNClient_deserializePingResp
+  (JNIEnv *, jobject, jobject);
+
+/*
+ * Class:     net_farsystem_mqttsngatek_mqttsnclient_NativeMQTTSNClient
+ * Method:    deserializeGwInfo
  * Signature: (Ljava/nio/ByteBuffer;)Lnet/farsystem/mqttsngatek/mqttsnclient/MQTTSNGwInfo;
  */
-JNIEXPORT jobject JNICALL Java_net_farsystem_mqttsngatek_mqttsnclient_NativeMQTTSNClient_deserializeMQTTSNGwInfo
+JNIEXPORT jobject JNICALL Java_net_farsystem_mqttsngatek_mqttsnclient_NativeMQTTSNClient_deserializeGwInfo
+  (JNIEnv *, jobject, jobject);
+
+/*
+ * Class:     net_farsystem_mqttsngatek_mqttsnclient_NativeMQTTSNClient
+ * Method:    deserializeConnAck
+ * Signature: (Ljava/nio/ByteBuffer;)Lnet/farsystem/mqttsngatek/mqttsnclient/MQTTSNConnAck;
+ */
+JNIEXPORT jobject JNICALL Java_net_farsystem_mqttsngatek_mqttsnclient_NativeMQTTSNClient_deserializeConnAck
   (JNIEnv *, jobject, jobject);
 
 #ifdef __cplusplus

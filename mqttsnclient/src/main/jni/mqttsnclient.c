@@ -234,7 +234,7 @@ JNIEXPORT jobject JNICALL Java_net_farsystem_mqttsngatek_mqttsnclient_NativeMQTT
 
 }
 
-JNIEXPORT jobject JNICALL Java_net_farsystem_mqttsngatek_mqttsnclient_NativeMQTTSNClient_deserializeMQTTSNGwInfo
+JNIEXPORT jobject JNICALL Java_net_farsystem_mqttsngatek_mqttsnclient_NativeMQTTSNClient_deserializeGwInfo
   (JNIEnv *env, jobject thisObj, jobject byteBuffer) {
 
     jclass cls_ByteBuffer = (*env)->GetObjectClass(env, byteBuffer);
@@ -260,7 +260,6 @@ JNIEXPORT jobject JNICALL Java_net_farsystem_mqttsngatek_mqttsnclient_NativeMQTT
 
     buf[len] = '\0';
 
-    printf("gatewayid = %d, limit = %d", buf[0], len);
     fflush(stdout);
 
     (*env)->DeleteLocalRef(env, bytes);
@@ -273,4 +272,103 @@ JNIEXPORT jobject JNICALL Java_net_farsystem_mqttsngatek_mqttsnclient_NativeMQTT
     jobject obj_gwinfo = (*env)->NewObject(env, cls_gwinfo, cnstr_gwinfo, (int)gatewayId, gwaddress);
 
     return obj_gwinfo;
+}
+
+JNIEXPORT jobject JNICALL Java_net_farsystem_mqttsngatek_mqttsnclient_NativeMQTTSNClient_serializePingReq
+  (JNIEnv *env, jobject thisObj, jstring clientId) {
+
+    MQTTSNString clientid = MQTTSNString_initializer;
+
+    int len;
+
+    if ((*env)->IsSameObject(env, clientId, NULL)) {
+        len = MQTTSNPacket_len(1);
+    } else {
+        clientid.cstring = (*env)->GetStringUTFChars(env, clientId, 0);
+        len = MQTTSNPacket_len(MQTTSNstrlen(clientid) + 1);
+    }
+
+    unsigned char buf[len];
+
+    int rc = MQTTSNSerialize_pingreq(buf, len, clientid);
+
+    jbyteArray bytes = (jbyteArray)(*env)->NewByteArray(env, len);
+
+    (*env)->SetByteArrayRegion(env, bytes, 0, len, (jbyte*)buf);
+
+    jclass bufcls = (*env)->FindClass(env, "java/nio/ByteBuffer");
+    jmethodID wrap = (*env)->GetStaticMethodID(env, bufcls, "wrap", "([B)Ljava/nio/ByteBuffer;");
+    jobject buffer = (jobject)(*env)->CallStaticObjectMethod(env, bufcls, wrap, bytes);
+
+    (*env)->DeleteLocalRef(env, bytes);
+
+    return buffer;
+
+}
+
+JNIEXPORT jobject JNICALL Java_net_farsystem_mqttsngatek_mqttsnclient_NativeMQTTSNClient_deserializePingResp
+  (JNIEnv *env, jobject thisObj, jobject byteBuffer) {
+
+    jclass cls_ByteBuffer = (*env)->GetObjectClass(env, byteBuffer);
+
+    jmethodID limit = (*env)->GetMethodID(env, cls_ByteBuffer, "limit", "()I");
+    jmethodID getBA = (*env)->GetMethodID(env, cls_ByteBuffer, "get", "([B)Ljava/nio/ByteBuffer;");
+
+    int len = (int)(*env)->CallIntMethod(env, byteBuffer, limit);
+
+    jbyteArray bytes = (jbyteArray)(*env)->NewByteArray(env, len);
+
+    jobject obj_ByteBuffer = (*env)->CallObjectMethod(env, byteBuffer, getBA, bytes);
+
+    unsigned char buf[len];
+
+    (*env)->GetByteArrayRegion(env, bytes, 0, len, buf);
+
+    int rc = MQTTSNDeserialize_pingresp(buf, len);
+
+    if (rc != 1) {
+        return NULL;
+    }
+
+    jclass cls_pingresp = (*env)->FindClass(env, "net/farsystem/mqttsngatek/mqttsnclient/MQTTSNPingResp");
+    jmethodID cnstr_pingresp = (*env)->GetMethodID(env, cls_pingresp, "<init>", "()V");
+
+    jobject obj_pingresp = (*env)->NewObject(env, cls_pingresp, cnstr_pingresp);
+
+    return obj_pingresp;
+
+}
+
+JNIEXPORT jobject JNICALL Java_net_farsystem_mqttsngatek_mqttsnclient_NativeMQTTSNClient_deserializeConnAck
+  (JNIEnv *env, jobject thisObj, jobject byteBuffer) {
+
+    jclass cls_ByteBuffer = (*env)->GetObjectClass(env, byteBuffer);
+
+    jmethodID limit = (*env)->GetMethodID(env, cls_ByteBuffer, "limit", "()I");
+    jmethodID getBA = (*env)->GetMethodID(env, cls_ByteBuffer, "get", "([B)Ljava/nio/ByteBuffer;");
+
+    int len = (int)(*env)->CallIntMethod(env, byteBuffer, limit);
+
+    jbyteArray bytes = (jbyteArray)(*env)->NewByteArray(env, len);
+
+    jobject obj_ByteBuffer = (*env)->CallObjectMethod(env, byteBuffer, getBA, bytes);
+
+    unsigned char buf[len];
+
+    (*env)->GetByteArrayRegion(env, bytes, 0, len, buf);
+
+    int connackrc;
+
+    int rc = MQTTSNDeserialize_connack(&connackrc, buf, len);
+
+    if (rc != 1) {
+        return NULL;
+    }
+
+    jclass cls_connack = (*env)->FindClass(env, "net/farsystem/mqttsngatek/mqttsnclient/MQTTSNConnAck");
+    jmethodID cnstr_connack = (*env)->GetMethodID(env, cls_connack, "<init>", "(I)V");
+
+    jobject obj_connack = (*env)->NewObject(env, cls_connack, cnstr_connack, connackrc);
+
+    return obj_connack;
 }

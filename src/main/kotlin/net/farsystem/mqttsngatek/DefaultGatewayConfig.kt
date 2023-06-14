@@ -1,5 +1,7 @@
 package net.farsystem.mqttsngatek
 
+import net.farsystem.mqttsngatek.model.NetworkProtocol
+
 class DefaultGatewayConfig : GatewayConfig {
 
     override fun port(): Int {
@@ -7,9 +9,21 @@ class DefaultGatewayConfig : GatewayConfig {
     }
 
     override fun networkInterface(): String {
-        return "enp0s25"
+        return "en0"
+    }
+
+    override fun networkProtocol(): String {
+        return "UDP6"
     }
 
     override fun gatewayId(): Int = 0x6d
+
+    override fun broker(): String {
+        return "127.0.0.1"
+    }
+
+    override fun brokerPort(): Int {
+        return 1883
+    }
 
 }
