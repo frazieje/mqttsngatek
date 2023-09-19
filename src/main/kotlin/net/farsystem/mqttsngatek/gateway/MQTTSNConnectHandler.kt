@@ -1,37 +1,34 @@
 package net.farsystem.mqttsngatek.gateway
 
 import net.farsystem.mqttsngatek.*
+import net.farsystem.mqttsngatek.data.repository.MQTTClientRepository
+import net.farsystem.mqttsngatek.data.repository.MQTTSNClientRepository
 import net.farsystem.mqttsngatek.model.MQTTSNClient
 import net.farsystem.mqttsngatek.model.NetworkContext
-import net.farsystem.mqttsngatek.mqtt.MQTTClient
-import net.farsystem.mqttsngatek.mqtt.MQTTConnectOptions
-import net.farsystem.mqttsngatek.mqtt.MQTTReturnCode
-import net.farsystem.mqttsngatek.mqtt.MQTTVersion
-import net.farsystem.mqttsngatek.mqtt.paho.PahoMQTTClient
+import net.farsystem.mqttsngatek.mqtt.*
 import org.slf4j.LoggerFactory
 
 class MQTTSNConnectHandler(
     private val mqttsnMessagBuilder: MQTTSNMessagBuilder,
-    private val gatewayConfig: GatewayConfig,
+    private val mqttsnClientRepository: MQTTSNClientRepository,
+    private val mqttClientRepository: MQTTClientRepository
 ) : MQTTSNMessageHandler {
 
     private val logger = LoggerFactory.getLogger(this::class.java)
 
-    private val mqttClients = mutableMapOf<MQTTSNClient, MQTTClient>()
-
-    override suspend fun handleMessage(networkContext: NetworkContext, message: MQTTSNMessage): MQTTSNMessage? {
+    override suspend fun handleMessage(message: MQTTSNMessage, networkContext: NetworkContext): MQTTSNMessage {
         val body = message.body as MQTTSNConnect
         logger.debug("CONNECT message received at handler with ClientID: ${body.clientId}")
 
-        val brokerUrl = "tcp://${gatewayConfig.broker()}:${gatewayConfig.brokerPort()}"
-
-        val snClient = MQTTSNClient(body.clientId)
-
-        val client: MQTTClient = mqttClients[snClient] ?: run {
-            val mqttClient = PahoMQTTClient(brokerUrl, snClient.clientId)
-            mqttClients[snClient] = mqttClient
-            mqttClient
+        val snClient = mqttsnClientRepository.getClient(networkContext)?.apply {
+            if (clientId != body.clientId) {
+                mqttsnClientRepository.addOrUpdateClient(this, networkContext)
+            }
+        } ?: MQTTSNClient(body.clientId).also {
+            mqttsnClientRepository.addOrUpdateClient(it, networkContext)
         }
+
+        val client = mqttClientRepository.getOrCreate(snClient)
 
         if (client.isConnected()) {
             logger.error("client already connected, disconnecting")
@@ -44,6 +41,8 @@ class MQTTSNConnectHandler(
             body.duration,
             MQTTVersion.VERSION_3_1_1
         )
+
+        //TODO: Handle cleanSession
 
         if (!body.willFlag) {
 

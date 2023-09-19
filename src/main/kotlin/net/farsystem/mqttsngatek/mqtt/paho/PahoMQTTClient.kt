@@ -8,17 +8,23 @@ import org.eclipse.paho.client.mqttv3.IMqttAsyncClient
 import org.eclipse.paho.client.mqttv3.IMqttToken
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions
 import org.eclipse.paho.client.mqttv3.internal.wire.MqttConnack
+import org.eclipse.paho.client.mqttv3.internal.wire.MqttPingResp
 import org.eclipse.paho.client.mqttv3.persist.MqttDefaultFilePersistence
 import org.slf4j.LoggerFactory
 import kotlin.coroutines.resume
 
-class PahoMQTTClient(private val brokerUrl: String, private val clientId: String) : MQTTClient {
+class PahoMQTTClient(
+    clientId: String,
+    brokerHost: String,
+    brokerPort: Int
+) : MQTTClient {
 
     private val logger = LoggerFactory.getLogger(this::class.java)
 
-    val client: IMqttAsyncClient
+    private val client: ManualKeepAliveMqttAsyncClient
 
     init {
+        val brokerUrl = "tcp://$brokerHost:$brokerPort"
         client = ManualKeepAliveMqttAsyncClient(brokerUrl, clientId, MqttDefaultFilePersistence())
     }
 
@@ -42,6 +48,18 @@ class PahoMQTTClient(private val brokerUrl: String, private val clientId: String
             throw mqttToken.exception
         }
 
+    }
+
+    override suspend fun ping(): MQTTPingResp {
+        val mqttToken = awaitCallback { client.sendPing(it) }!!
+
+        if (mqttToken.exception == null) {
+            val pingRespMsg = mqttToken.response as MqttPingResp
+            logger.debug("PINGRESP from mqtt broker")
+            return MQTTPingResp()
+        } else {
+            throw mqttToken.exception
+        }
     }
 
     override suspend fun disconnect() {

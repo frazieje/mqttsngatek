@@ -1,5 +1,6 @@
 package net.farsystem.mqttsngatek
 
+import java.lang.IllegalArgumentException
 import java.nio.ByteBuffer
 import java.nio.charset.StandardCharsets
 
@@ -7,6 +8,14 @@ data class MQTTSNGwInfo(
     val gatewayId: Int,
     val gatewayAddress: String?
 ): MQTTSNBody {
+
+    init {
+        val byteVal = gatewayId.toByte()
+        if ((byteVal.toInt() and 0xFF) != gatewayId) {
+            throw IllegalArgumentException("GatewayId must fit within a single octet")
+        }
+    }
+
     companion object {
         fun fromBuffer(buffer: ByteBuffer): MQTTSNGwInfo {
             val gatewayId = buffer.get().toInt() and 0xFF

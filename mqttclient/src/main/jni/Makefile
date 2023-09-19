@@ -78,8 +78,8 @@ START_GROUP =
 END_GROUP =
 GAI_LIB =
 EXTRA_LIB = -ldl
-CCFLAGS_SO += -Wno-deprecated-declarations -DOSX -I /usr/local/opt/openssl/include
-LDFLAGS_AS += -Wl,-install_name,lib${MQTTLIB_AS}.so.${MAJOR_VERSION} -L /usr/local/opt/openssl/lib
+CCFLAGS_SO += -Wno-deprecated-declarations -DOSX
+LDFLAGS_AS += -Wl,-install_name,lib${MQTTLIB_AS}.so.${MAJOR_VERSION}
 endif
 INC_PATHS += -I$(abspath ../../../paho.mqtt.c/src)
 INC_PATHS += -I$(abspath ../../../src/main/jni/include)

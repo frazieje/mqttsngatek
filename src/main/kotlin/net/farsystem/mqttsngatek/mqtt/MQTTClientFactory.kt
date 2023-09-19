@@ -1,5 +1,5 @@
 package net.farsystem.mqttsngatek.mqtt
 
-interface MQTTClientFactory {
-    suspend fun getClient()
+fun interface MQTTClientFactory {
+    suspend fun getClient(clientId: String, brokerHost: String, brokerPort: Int): MQTTClient
 }

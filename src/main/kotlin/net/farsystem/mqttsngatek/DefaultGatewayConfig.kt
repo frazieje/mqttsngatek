@@ -1,7 +1,5 @@
 package net.farsystem.mqttsngatek
 
-import net.farsystem.mqttsngatek.model.NetworkProtocol
-
 class DefaultGatewayConfig : GatewayConfig {
 
     override fun port(): Int {
@@ -9,7 +7,7 @@ class DefaultGatewayConfig : GatewayConfig {
     }
 
     override fun networkInterface(): String {
-        return "en0"
+        return ""
     }
 
     override fun networkProtocol(): String {

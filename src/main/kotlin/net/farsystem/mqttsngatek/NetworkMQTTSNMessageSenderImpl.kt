@@ -53,12 +53,8 @@ class NetworkMQTTSNMessageSenderImpl(
 
     override suspend fun send(networkContext: NetworkContext, mqttsnMessage: MQTTSNMessage) {
 
-        val remoteAddress = InetSocketAddress(networkContext.destinationAddress, networkContext.destinationPort)
-
-        val localAddress = InetSocketAddress(networkContext.sourceAddress, networkContext.sourcePort)
-
         val connection: Connection<Any> = awaitCallback {
-            transport.connect(remoteAddress, localAddress, it)
+            transport.connect(networkContext.destination, networkContext.source, it)
         }
 
         awaitCallback<WriteResult<MQTTSNMessage, Any>> {

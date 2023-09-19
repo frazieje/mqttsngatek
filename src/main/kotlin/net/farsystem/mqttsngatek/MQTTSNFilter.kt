@@ -7,7 +7,9 @@ import org.glassfish.grizzly.filterchain.NextAction
 import org.glassfish.grizzly.memory.Buffers
 import org.slf4j.LoggerFactory
 
-class MQTTSNFilter(val mqttsnMessagBuilder: MQTTSNMessagBuilder) : BaseFilter() {
+class MQTTSNFilter(
+    private val mqttsnMessagBuilder: MQTTSNMessagBuilder,
+) : BaseFilter() {
 
     private val logger = LoggerFactory.getLogger(this::class.java)
 
@@ -28,7 +30,7 @@ class MQTTSNFilter(val mqttsnMessagBuilder: MQTTSNMessagBuilder) : BaseFilter() 
             return ctx.getStopAction(sourceBuffer)
         }
 
-        ctx.setMessage(message)
+        ctx.setMessage(MQTTSNContext(ctx.connection, message))
 
         val packetLength = message.length()
 

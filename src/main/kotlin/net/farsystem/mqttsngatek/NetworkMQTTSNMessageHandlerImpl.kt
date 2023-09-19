@@ -5,16 +5,19 @@ import net.farsystem.mqttsngatek.model.NetworkContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import net.farsystem.mqttsngatek.data.repository.MQTTClientRepository
 import net.farsystem.mqttsngatek.data.repository.MQTTSNClientRepository
-import net.farsystem.mqttsngatek.gateway.MQTTSNConnectHandler
-import net.farsystem.mqttsngatek.gateway.MQTTSNMessageHandler
-import net.farsystem.mqttsngatek.gateway.MQTTSNSearchGwHandler
+import net.farsystem.mqttsngatek.gateway.*
+import net.farsystem.mqttsngatek.model.MQTTSNClient
 import org.slf4j.LoggerFactory
+import java.lang.Exception
 
 class NetworkMQTTSNMessageHandlerImpl(
 //    private val repository: MQTTSNClientRepository,
     messageBuilder: MQTTSNMessagBuilder,
-    gatewayConfig: GatewayConfig
+    gatewayConfig: GatewayConfig,
+    mqttsnClientRepository: MQTTSNClientRepository,
+    mqttClientRepository: MQTTClientRepository,
 ): NetworkMQTTSNMessageHandler {
 
     private val logger = LoggerFactory.getLogger(this::class.java)
@@ -27,23 +30,23 @@ class NetworkMQTTSNMessageHandlerImpl(
         onComplete: (MQTTSNMessage?) -> Unit
     ) {
         handlerScope.launch {
+            val result = try {
+                logger.debug(mqttsnMessage.toString())
 
-//            val client = repository.getClientByContext(networkContext)
+                val handler = classMap[mqttsnMessage.header.messageType]!!
 
-            logger.debug(mqttsnMessage.toString())
-
-            val handler = classMap[mqttsnMessage.header.messageType]!!
-
-            val response = handler.handleMessage(networkContext, mqttsnMessage)
-
-            onComplete(response)
-
+                handler.handleMessage(mqttsnMessage, networkContext)
+            } catch (e: Exception) {
+                logger.error("Error processing MQTTSN Message $mqttsnMessage", e)
+                null
+            }
+            onComplete(result)
         }
     }
 
     private val classMap: Map<MQTTSNMessageType, MQTTSNMessageHandler> = hashMapOf(
         MQTTSNMessageType.SEARCHGW to MQTTSNSearchGwHandler(messageBuilder, gatewayConfig),
-        MQTTSNMessageType.CONNECT to MQTTSNConnectHandler(messageBuilder, gatewayConfig)
+        MQTTSNMessageType.CONNECT to MQTTSNConnectHandler(messageBuilder, mqttsnClientRepository, mqttClientRepository),
+        MQTTSNMessageType.PINGREQ to MQTTSNPingReqHandler(messageBuilder, mqttsnClientRepository, mqttClientRepository)
     )
-
 }

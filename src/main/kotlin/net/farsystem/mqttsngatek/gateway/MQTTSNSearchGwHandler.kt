@@ -7,18 +7,17 @@ import org.slf4j.LoggerFactory
 class MQTTSNSearchGwHandler(
     private val messagBuilder: MQTTSNMessagBuilder,
     private val gatewayConfig: GatewayConfig,
-
 ) : MQTTSNMessageHandler {
 
     private val logger = LoggerFactory.getLogger(this::class.java)
 
-    override suspend fun handleMessage(networkContext: NetworkContext, message: MQTTSNMessage): MQTTSNMessage? {
+    override suspend fun handleMessage(message: MQTTSNMessage, networkContext: NetworkContext): MQTTSNMessage {
 
         val body = message.body as MQTTSNSearchGw
 
         logger.debug("SEARCHGW Received with radius ${body.radius}")
 
-        val hostAddress = networkContext.destinationAddress.hostAddress
+        val hostAddress = networkContext.destination.address.hostAddress
 
         val localAddress = if (hostAddress.contains('%'))
             hostAddress.substring(0, hostAddress.indexOf('%'))

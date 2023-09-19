@@ -2,20 +2,18 @@ package net.farsystem.mqttsngatek
 
 import net.farsystem.mqttsngatek.model.NetworkContext
 import net.farsystem.mqttsngatek.model.NetworkProtocol
-import org.glassfish.grizzly.Grizzly
 import org.glassfish.grizzly.filterchain.BaseFilter
 import org.glassfish.grizzly.filterchain.FilterChainContext
 import org.glassfish.grizzly.filterchain.NextAction
 import org.slf4j.LoggerFactory
+import java.net.Inet6Address
 import java.net.InetSocketAddress
+import java.net.NetworkInterface
 
 class MQTTSNGatewayFilter(
     val networkMQTTSNMessageHandler: NetworkMQTTSNMessageHandler,
-    val config: GatewayConfig
+    val gatewayConfig: GatewayConfig
 ) : BaseFilter() {
-
-    private val messageProcessedAttributte = Grizzly.DEFAULT_ATTRIBUTE_BUILDER.createAttribute<Boolean>("messageProcessed")
-    private val responseAttribute = Grizzly.DEFAULT_ATTRIBUTE_BUILDER.createAttribute<MQTTSNMessage?>("responseMessage")
 
     private val logger = LoggerFactory.getLogger(this::class.java)
 
@@ -24,40 +22,37 @@ class MQTTSNGatewayFilter(
 
         val cxn = ctx.connection
 
-        val peerAddress = cxn.peerAddress as? InetSocketAddress
-
-        val gateWayAddress = cxn.localAddress as InetSocketAddress
-
         logger.debug("gateway handleRead cxn ${System.identityHashCode(cxn)}")
 
-        val message = ctx.getMessage<MQTTSNMessage>()
+        val mqttsnContext = ctx.getMessage<MQTTSNContext>()
 
-        val networkContext = NetworkContext(
-            NetworkProtocol.valueOf(config.networkProtocol()),
-            peerAddress?.address ?: gateWayAddress.address,
-            peerAddress?.port ?: gateWayAddress.port,
-            gateWayAddress.address,
-            gateWayAddress.port
-        )
+        val networkContext = when (val protocol = NetworkProtocol.valueOf(gatewayConfig.networkProtocol())) {
+            NetworkProtocol.UDP6 -> {
+                val peerSocketAddress = ctx.address as InetSocketAddress
+                val localSocketAddress = cxn.localAddress as InetSocketAddress
+                NetworkContext(
+                    protocol,
+                    peerSocketAddress,
+                    localSocketAddress,
+                )
+            }
+        }
 
-        val messageProcessed = messageProcessedAttributte[ctx.connection]
-        val responseMessage = responseAttribute[ctx.connection]
-
-        return if (messageProcessed != true) {
+        return if (!mqttsnContext.isProcessed) {
             logger.debug("gateway handleRead message not processed, suspending ${System.identityHashCode(cxn)}")
             ctx.suspend()
-            networkMQTTSNMessageHandler.onReceive(networkContext, message) {
+            networkMQTTSNMessageHandler.onReceive(networkContext, mqttsnContext.message) {
                 logger.debug("gateway handleRead message done processing, resuming ${System.identityHashCode(cxn)}")
-                messageProcessedAttributte[ctx.connection] = true
-                responseAttribute[ctx.connection] = it
+                mqttsnContext.response = it
                 ctx.resume()
             }
             ctx.suspendAction
         } else {
             logger.debug("gateway handleRead message processed, finishing ${System.identityHashCode(cxn)}")
-            if (responseMessage != null) {
+            mqttsnContext.response?.let {
                 logger.debug("gateway handleRead response found, sending ${System.identityHashCode(cxn)}")
-                ctx.write(peerAddress, responseMessage, null)
+                ctx.write(networkContext.source, it, null)
+                mqttsnContext.reset()
             }
             ctx.stopAction
         }
