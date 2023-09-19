@@ -57,7 +57,7 @@ class GatewayTests {
 
     private val mqttsnClientRepository = InMemoryMQTTSNClientRepository()
 
-    private val mqttClientRepository = InMemoryMQTTClientRepository(gatewayConfig) { _, _, _ -> FakeMQTTClient() }
+    private val mqttClientRepository = InMemoryMQTTClientRepository(gatewayConfig) { _, _, _ -> fakeMQTTClient }
 
 //    private val mqttClientRepository = InMemoryMQTTClientRepository(
 //        gatewayConfig,

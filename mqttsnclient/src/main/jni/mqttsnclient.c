@@ -7,7 +7,7 @@ JNIEXPORT jobject JNICALL Java_net_farsystem_mqttsngatek_mqttsnclient_NativeMQTT
 
     MQTTSNPacket_connectData options = MQTTSNPacket_connectData_initializer;
 
-    options.clientID.cstring = (*env)->GetStringUTFChars(env, clientId, 0);
+    options.clientID.cstring = ((char *)((*env)->GetStringUTFChars(env, clientId, 0)));
     options.duration = (unsigned short)duration;
     options.cleansession = (unsigned char)isCleanSession;
     options.willFlag = (unsigned char)isWillFlag;
@@ -49,7 +49,7 @@ JNIEXPORT jobject JNICALL Java_net_farsystem_mqttsngatek_mqttsnclient_NativeMQTT
     MQTTSN_topicid topicType;
 
     topicType.type = MQTTSN_TOPIC_TYPE_NORMAL;
-    topicType.data.long_.name = (*env)->GetStringUTFChars(env, topic, 0);
+    topicType.data.long_.name = ((char *)((*env)->GetStringUTFChars(env, topic, 0)));
     topicType.data.long_.len = strlen(topicType.data.long_.name);
 
     unsigned char dupChar = (unsigned char)dup;
@@ -156,7 +156,7 @@ JNIEXPORT jobject JNICALL Java_net_farsystem_mqttsngatek_mqttsnclient_NativeMQTT
 
     MQTTSNString topicstr;
 
-    topicstr.cstring = (*env)->GetStringUTFChars(env, topic, 0);
+    topicstr.cstring = ((char *)((*env)->GetStringUTFChars(env, topic, 0)));
     topicstr.lenstring.len = strlen(topicstr.cstring);
 
     unsigned short topicIdShort = (unsigned short)topicId;
@@ -284,7 +284,7 @@ JNIEXPORT jobject JNICALL Java_net_farsystem_mqttsngatek_mqttsnclient_NativeMQTT
     if ((*env)->IsSameObject(env, clientId, NULL)) {
         len = MQTTSNPacket_len(1);
     } else {
-        clientid.cstring = (*env)->GetStringUTFChars(env, clientId, 0);
+        clientid.cstring = ((char *)((*env)->GetStringUTFChars(env, clientId, 0)));
         len = MQTTSNPacket_len(MQTTSNstrlen(clientid) + 1);
     }
 
