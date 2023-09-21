@@ -13,6 +13,7 @@ enum class MQTTSNMessageType(val code: Int) {
     REGISTER(0x0A),
     REGACK(0x0B),
     SUBSCRIBE(0x12),
+    SUBACK(0x13),
     PINGREQ(0x16),
     PINGRESP(0x17);
 

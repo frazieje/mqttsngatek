@@ -61,7 +61,7 @@ class MQTTSNConnectHandler(
 
             return mqttsnMessagBuilder.createMessage(
                 MQTTSNMessageType.CONNACK,
-                MQTTSNConnAck(rc)
+                MQTTSNConnack(rc)
             )
 
         } else {

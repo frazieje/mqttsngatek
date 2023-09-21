@@ -1,5 +1,6 @@
 package net.farsystem.mqttsngatek
 
+import java.lang.IllegalArgumentException
 import java.nio.ByteBuffer
 import java.nio.charset.StandardCharsets
 
@@ -11,6 +12,20 @@ data class MQTTSNSubscribe(
     val topic: String?,
     val topicId: Int?
 ): MQTTSNBody {
+
+    init {
+        val shortVal = messageId.toShort()
+        if ((shortVal.toInt() and 0xFF) != messageId) {
+            throw IllegalArgumentException("MessageId must fit within a two octets")
+        }
+        topicId?.let {
+            val topicShort = it.toShort()
+            if ((topicShort.toInt() and 0xFF) != it) {
+                throw IllegalArgumentException("TopicId must fit within a two octets")
+            }
+        }
+    }
+
     companion object {
         fun fromBuffer(buffer: ByteBuffer): MQTTSNSubscribe {
             val flags = buffer.get().toInt() and 0xFF
@@ -60,6 +75,4 @@ data class MQTTSNSubscribe(
             2
         }
     }
-
-
 }

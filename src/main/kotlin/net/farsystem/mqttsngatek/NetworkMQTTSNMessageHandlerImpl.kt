@@ -7,17 +7,18 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import net.farsystem.mqttsngatek.data.repository.MQTTClientRepository
 import net.farsystem.mqttsngatek.data.repository.MQTTSNClientRepository
+import net.farsystem.mqttsngatek.data.repository.MQTTSNTopicRepository
 import net.farsystem.mqttsngatek.gateway.*
 import net.farsystem.mqttsngatek.model.MQTTSNClient
 import org.slf4j.LoggerFactory
 import java.lang.Exception
 
 class NetworkMQTTSNMessageHandlerImpl(
-//    private val repository: MQTTSNClientRepository,
     messageBuilder: MQTTSNMessagBuilder,
     gatewayConfig: GatewayConfig,
     mqttsnClientRepository: MQTTSNClientRepository,
     mqttClientRepository: MQTTClientRepository,
+    mqttsnTopicRepository: MQTTSNTopicRepository
 ): NetworkMQTTSNMessageHandler {
 
     private val logger = LoggerFactory.getLogger(this::class.java)
@@ -47,6 +48,12 @@ class NetworkMQTTSNMessageHandlerImpl(
     private val classMap: Map<MQTTSNMessageType, MQTTSNMessageHandler> = hashMapOf(
         MQTTSNMessageType.SEARCHGW to MQTTSNSearchGwHandler(messageBuilder, gatewayConfig),
         MQTTSNMessageType.CONNECT to MQTTSNConnectHandler(messageBuilder, mqttsnClientRepository, mqttClientRepository),
-        MQTTSNMessageType.PINGREQ to MQTTSNPingReqHandler(messageBuilder, mqttsnClientRepository, mqttClientRepository)
+        MQTTSNMessageType.PINGREQ to MQTTSNPingReqHandler(messageBuilder, mqttsnClientRepository, mqttClientRepository),
+        MQTTSNMessageType.SUBSCRIBE to MQTTSNSubscribeHandler(
+            messageBuilder,
+            mqttsnClientRepository,
+            mqttClientRepository,
+            mqttsnTopicRepository
+        )
     )
 }

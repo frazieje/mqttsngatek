@@ -6,7 +6,7 @@ enum class MQTTSNQoS(val code: Int) {
     TWO(0b10),
     MINUS_ONE(0b11);
     companion object {
-        private val VALUES = values()
+        private val VALUES = entries.toTypedArray()
         fun fromCode(code: Int) = VALUES.first { it.code == code }
     }
 }

@@ -1,14 +1,13 @@
 package net.farsystem.mqttsngatek.mqtt.paho
 
 import kotlinx.coroutines.suspendCancellableCoroutine
+import net.farsystem.mqttsngatek.MQTTSNSuback
 import net.farsystem.mqttsngatek.ManualKeepAliveMqttAsyncClient
 import net.farsystem.mqttsngatek.mqtt.*
-import org.eclipse.paho.client.mqttv3.IMqttActionListener
-import org.eclipse.paho.client.mqttv3.IMqttAsyncClient
-import org.eclipse.paho.client.mqttv3.IMqttToken
-import org.eclipse.paho.client.mqttv3.MqttConnectOptions
+import org.eclipse.paho.client.mqttv3.*
 import org.eclipse.paho.client.mqttv3.internal.wire.MqttConnack
 import org.eclipse.paho.client.mqttv3.internal.wire.MqttPingResp
+import org.eclipse.paho.client.mqttv3.internal.wire.MqttSuback
 import org.eclipse.paho.client.mqttv3.persist.MqttDefaultFilePersistence
 import org.slf4j.LoggerFactory
 import kotlin.coroutines.resume
@@ -57,6 +56,22 @@ class PahoMQTTClient(
             val pingRespMsg = mqttToken.response as MqttPingResp
             logger.debug("PINGRESP from mqtt broker")
             return MQTTPingResp()
+        } else {
+            throw mqttToken.exception
+        }
+    }
+
+    override suspend fun subscribe(topic: String, qos: Int, messageId: Int): MQTTSuback {
+        val mqttToken = awaitCallback {
+            client.subscribe(topic, qos, messageId, null, it) { topic, message ->
+                message
+            }
+        }!!
+
+        if (mqttToken.exception == null) {
+            val suback = mqttToken.response as MqttSuback
+            //we can just use the first index of grantedQos[] since MQTT-SN only sends one topic at a time
+            return MQTTSuback(MQTTQoS.fromCode(suback.grantedQos[0]))
         } else {
             throw mqttToken.exception
         }
