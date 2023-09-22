@@ -14,11 +14,8 @@ import org.slf4j.LoggerFactory
 import java.lang.Exception
 
 class NetworkMQTTSNMessageHandlerImpl(
-    messageBuilder: MQTTSNMessagBuilder,
-    gatewayConfig: GatewayConfig,
-    mqttsnClientRepository: MQTTSNClientRepository,
-    mqttClientRepository: MQTTClientRepository,
-    mqttsnTopicRepository: MQTTSNTopicRepository
+    private val handlers: Map<MQTTSNMessageType, MQTTSNMessageHandler>,
+    private val sender: NetworkMQTTSNMessageSender
 ): NetworkMQTTSNMessageHandler {
 
     private val logger = LoggerFactory.getLogger(this::class.java)
@@ -41,19 +38,11 @@ class NetworkMQTTSNMessageHandlerImpl(
                 logger.error("Error processing MQTTSN Message $mqttsnMessage", e)
                 null
             }
+
+            result?.run {
+
+            }
             onComplete(result)
         }
     }
-
-    private val classMap: Map<MQTTSNMessageType, MQTTSNMessageHandler> = hashMapOf(
-        MQTTSNMessageType.SEARCHGW to MQTTSNSearchGwHandler(messageBuilder, gatewayConfig),
-        MQTTSNMessageType.CONNECT to MQTTSNConnectHandler(messageBuilder, mqttsnClientRepository, mqttClientRepository),
-        MQTTSNMessageType.PINGREQ to MQTTSNPingReqHandler(messageBuilder, mqttsnClientRepository, mqttClientRepository),
-        MQTTSNMessageType.SUBSCRIBE to MQTTSNSubscribeHandler(
-            messageBuilder,
-            mqttsnClientRepository,
-            mqttClientRepository,
-            mqttsnTopicRepository
-        )
-    )
 }

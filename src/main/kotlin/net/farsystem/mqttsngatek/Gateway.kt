@@ -1,11 +1,7 @@
 package net.farsystem.mqttsngatek
 
-import net.farsystem.mqttsngatek.data.repository.InMemoryMQTTClientRepository
-import net.farsystem.mqttsngatek.data.repository.InMemoryMQTTSNClientRepository
-import net.farsystem.mqttsngatek.data.repository.MQTTClientRepository
-import net.farsystem.mqttsngatek.data.repository.MQTTSNClientRepository
-import net.farsystem.mqttsngatek.gateway.GrizzlyMQTTSNGateway
-import net.farsystem.mqttsngatek.gateway.MQTTSNGateway
+import net.farsystem.mqttsngatek.data.repository.*
+import net.farsystem.mqttsngatek.gateway.*
 import net.farsystem.mqttsngatek.mqtt.MQTTClient
 import net.farsystem.mqttsngatek.mqtt.MQTTClientFactory
 import net.farsystem.mqttsngatek.mqtt.paho.PahoMQTTClient
@@ -34,11 +30,25 @@ class Gateway {
                 ::PahoMQTTClient
             )
 
+            val mqttsnTopicRepository: MQTTSNTopicRepository = InMemoryMQTTSNTopicRepository(
+                emptyMap()
+            )
+
+            val classMap: Map<MQTTSNMessageType, MQTTSNMessageHandler> = hashMapOf(
+                MQTTSNMessageType.SEARCHGW to MQTTSNSearchGwHandler(messageBuilder, config),
+                MQTTSNMessageType.CONNECT to MQTTSNConnectHandler(messageBuilder, mqttsnClientRepository, mqttClientRepository),
+                MQTTSNMessageType.PINGREQ to MQTTSNPingReqHandler(messageBuilder, mqttsnClientRepository, mqttClientRepository),
+                MQTTSNMessageType.SUBSCRIBE to MQTTSNSubscribeHandler(
+                    messageBuilder,
+                    mqttsnClientRepository,
+                    mqttClientRepository,
+                    mqttsnTopicRepository
+                )
+            )
+
             val handler: NetworkMQTTSNMessageHandler = NetworkMQTTSNMessageHandlerImpl(
-                messageBuilder,
-                config,
-                mqttsnClientRepository,
-                mqttClientRepository
+                classMap,
+                NetworkMQTTSNMessageSenderImpl(messageBuilder)
             )
 
             val gateway: MQTTSNGateway = GrizzlyMQTTSNGateway(

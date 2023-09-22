@@ -2,14 +2,19 @@ package net.farsystem.mqttsngatek
 
 import kotlinx.coroutines.suspendCancellableCoroutine
 import net.farsystem.mqttsngatek.model.NetworkContext
+import org.glassfish.grizzly.CloseListener
+import org.glassfish.grizzly.Closeable
 import org.glassfish.grizzly.CompletionHandler
 import org.glassfish.grizzly.Connection
+import org.glassfish.grizzly.ICloseType
 import org.glassfish.grizzly.WriteResult
 import org.glassfish.grizzly.filterchain.FilterChainBuilder
 import org.glassfish.grizzly.filterchain.TransportFilter
+import org.glassfish.grizzly.nio.transport.UDPNIOConnection
 import org.glassfish.grizzly.nio.transport.UDPNIOTransport
 import org.glassfish.grizzly.nio.transport.UDPNIOTransportBuilder
 import java.net.InetSocketAddress
+import java.net.SocketAddress
 import kotlin.coroutines.resume
 
 class NetworkMQTTSNMessageSenderImpl(
@@ -51,9 +56,15 @@ class NetworkMQTTSNMessageSenderImpl(
         })
     }
 
+    private suspend fun Connection<SocketAddress>.awaitClosure() = suspendCancellableCoroutine { cont ->
+        addCloseListener { _, _ -> cont.resume(Unit) }
+        close()
+        closeSilently()
+    }
+
     override suspend fun send(networkContext: NetworkContext, mqttsnMessage: MQTTSNMessage) {
 
-        val connection: Connection<Any> = awaitCallback {
+        val connection: Connection<SocketAddress> = awaitCallback {
             transport.connect(networkContext.destination, networkContext.source, it)
         }
 

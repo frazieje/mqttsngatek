@@ -7,7 +7,8 @@ interface MQTTSNTopicRepository {
 
     suspend fun getOrCreateTopic(client: MQTTSNClient, topic: String): MQTTSNTopic
 
-    suspend fun getTopic(id: Int): MQTTSNTopic?
+    suspend fun getPredefinedTopic(id: Int): MQTTSNTopic?
+    suspend fun getPredefinedTopic(topic: String): MQTTSNTopic?
 
     suspend fun getAllTopics(client: MQTTSNClient): List<MQTTSNTopic>
 
