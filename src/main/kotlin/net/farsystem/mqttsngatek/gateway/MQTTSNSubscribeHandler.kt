@@ -60,7 +60,7 @@ class MQTTSNSubscribeHandler(
             }
             MQTTSNTopicType.PREDEFINED -> {
                 val topicId = subscribeMsg.topicId!!
-                mqttsnTopicRepository.getTopic(topicId)?.let {
+                mqttsnTopicRepository.getPredefinedTopic(topicId)?.let {
                     val mqttSuback = mqttClient.subscribe(it.topic, subscribeMsg.qos.code, subscribeMsg.messageId)
                     MQTTSNSuback(
                         MQTTSNQoS.fromCode(mqttSuback.grantedQos.code),

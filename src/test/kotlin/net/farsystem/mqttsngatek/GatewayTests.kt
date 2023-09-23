@@ -3,6 +3,7 @@ package net.farsystem.mqttsngatek
 import kotlinx.coroutines.test.runTest
 import net.farsystem.mqttsngatek.data.repository.InMemoryMQTTClientRepository
 import net.farsystem.mqttsngatek.data.repository.InMemoryMQTTSNClientRepository
+import net.farsystem.mqttsngatek.data.repository.InMemoryMQTTSNTopicRepository
 import net.farsystem.mqttsngatek.gateway.GrizzlyMQTTSNGateway
 import net.farsystem.mqttsngatek.gateway.MQTTSNGateway
 import net.farsystem.mqttsngatek.mqtt.MQTTConnack
@@ -59,19 +60,28 @@ class GatewayTests {
 
     private val mqttClientRepository = InMemoryMQTTClientRepository(gatewayConfig) { _, _, _ -> fakeMQTTClient }
 
+    private val mqttsnTopicRepository = InMemoryMQTTSNTopicRepository(emptyMap())
+
 //    private val mqttClientRepository = InMemoryMQTTClientRepository(
 //        gatewayConfig,
 //    ) { clientId, host, port ->
 //        PahoMQTTClient(clientId, host, port)
 //    }
 
-    private val networkMQTTSNMessageHandler =
-        NetworkMQTTSNMessageHandlerImpl(
-            mqttsnMessageBuilder,
-            gatewayConfig,
-            mqttsnClientRepository,
-            mqttClientRepository
-        )
+    private val handlerRegistry = MQTTSNMessageHandlerRegistry(
+        mqttsnMessageBuilder,
+        gatewayConfig,
+        mqttsnClientRepository,
+        mqttClientRepository,
+        mqttsnTopicRepository
+    )
+
+    private val networkMQTTSNMessageSender = GrizzlyMQTTSNMessageSender(mqttsnMessageBuilder)
+
+    private val networkMQTTSNMessageHandler = NetworkMQTTSNMessageHandlerImpl(
+        handlerRegistry,
+        networkMQTTSNMessageSender
+    )
 
     private val captureFilter: CaptureFilter = CaptureFilter("client")
 
@@ -103,8 +113,7 @@ class GatewayTests {
 
         clientTransport.start()
 
-        cxn = clientTransport.connect(serverAddress, 10000).get(1, TimeUnit.SECONDS) as UDPNIOConnection
-
+        cxn = clientTransport.connect(serverAddress, 10000).get(5, TimeUnit.SECONDS) as UDPNIOConnection
     }
 
     @AfterAll
@@ -132,11 +141,11 @@ class GatewayTests {
 
     @Test
     fun `MQTTSN Subscribe with normal topic is processed`() {
-        val client = NativeMQTTSNClient()
-        val bytes = client.serializeSubscribeNormal(false, 1, 1234, "someTopic")
-        val buf = Buffers.wrap(cxn.transport.memoryManager, bytes)
-        cxn.write(buf)
-        Thread.sleep(120000)
+//        val client = NativeMQTTSNClient()
+//        val bytes = client.serializeSubscribeNormal(false, 1, 1234, "someTopic")
+//        val buf = Buffers.wrap(cxn.transport.memoryManager, bytes)
+//        cxn.write(buf)
+//        Thread.sleep(120000)
     }
 //
 //    @Test

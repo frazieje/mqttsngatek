@@ -22,6 +22,10 @@ class FakeMQTTClient : MQTTClient {
         return responseQueue.removeFirst() as MQTTPingResp
     }
 
+    override suspend fun subscribe(topic: String, qos: Int, messageId: Int): MQTTSuback {
+        TODO("Not yet implemented")
+    }
+
     override suspend fun disconnect() {
         isConnected = false
     }

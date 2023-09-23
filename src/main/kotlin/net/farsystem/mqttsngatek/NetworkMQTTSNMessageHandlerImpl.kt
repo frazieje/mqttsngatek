@@ -10,11 +10,12 @@ import net.farsystem.mqttsngatek.data.repository.MQTTSNClientRepository
 import net.farsystem.mqttsngatek.data.repository.MQTTSNTopicRepository
 import net.farsystem.mqttsngatek.gateway.*
 import net.farsystem.mqttsngatek.model.MQTTSNClient
+import net.farsystem.mqttsngatek.model.NetworkContext.Companion.flip
 import org.slf4j.LoggerFactory
 import java.lang.Exception
 
 class NetworkMQTTSNMessageHandlerImpl(
-    private val handlers: Map<MQTTSNMessageType, MQTTSNMessageHandler>,
+    private val handlerRegistry: MQTTSNMessageHandlerRegistry,
     private val sender: NetworkMQTTSNMessageSender
 ): NetworkMQTTSNMessageHandler {
 
@@ -22,27 +23,29 @@ class NetworkMQTTSNMessageHandlerImpl(
 
     private val handlerScope = CoroutineScope(Dispatchers.IO)
 
-    override fun onReceive(
+    override fun receive(
         networkContext: NetworkContext,
-        mqttsnMessage: MQTTSNMessage,
-        onComplete: (MQTTSNMessage?) -> Unit
+        mqttsnMessage: MQTTSNMessage
     ) {
         handlerScope.launch {
             val result = try {
                 logger.debug(mqttsnMessage.toString())
 
-                val handler = classMap[mqttsnMessage.header.messageType]!!
+                val handler = handlerRegistry.resolve(mqttsnMessage.header.messageType)
 
-                handler.handleMessage(mqttsnMessage, networkContext)
+                if (handler == null) {
+                    logger.warn("Handler not found for MQTTSN Message $mqttsnMessage")
+                }
+
+                handler?.handleMessage(mqttsnMessage, networkContext)
             } catch (e: Exception) {
                 logger.error("Error processing MQTTSN Message $mqttsnMessage", e)
                 null
             }
 
-            result?.run {
-
+            result?.let {
+                sender.send(networkContext.flip(), it)
             }
-            onComplete(result)
         }
     }
 }

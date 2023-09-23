@@ -30,7 +30,7 @@ class MQTTSNFilter(
             return ctx.getStopAction(sourceBuffer)
         }
 
-        ctx.setMessage(MQTTSNContext(ctx.connection, message))
+        ctx.setMessage(message)
 
         val packetLength = message.length()
 

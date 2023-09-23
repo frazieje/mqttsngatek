@@ -2,8 +2,6 @@ package net.farsystem.mqttsngatek
 
 import net.farsystem.mqttsngatek.data.repository.*
 import net.farsystem.mqttsngatek.gateway.*
-import net.farsystem.mqttsngatek.mqtt.MQTTClient
-import net.farsystem.mqttsngatek.mqtt.MQTTClientFactory
 import net.farsystem.mqttsngatek.mqtt.paho.PahoMQTTClient
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -34,21 +32,17 @@ class Gateway {
                 emptyMap()
             )
 
-            val classMap: Map<MQTTSNMessageType, MQTTSNMessageHandler> = hashMapOf(
-                MQTTSNMessageType.SEARCHGW to MQTTSNSearchGwHandler(messageBuilder, config),
-                MQTTSNMessageType.CONNECT to MQTTSNConnectHandler(messageBuilder, mqttsnClientRepository, mqttClientRepository),
-                MQTTSNMessageType.PINGREQ to MQTTSNPingReqHandler(messageBuilder, mqttsnClientRepository, mqttClientRepository),
-                MQTTSNMessageType.SUBSCRIBE to MQTTSNSubscribeHandler(
-                    messageBuilder,
-                    mqttsnClientRepository,
-                    mqttClientRepository,
-                    mqttsnTopicRepository
-                )
+            val handlerRegistry = MQTTSNMessageHandlerRegistry(
+                messageBuilder,
+                config,
+                mqttsnClientRepository,
+                mqttClientRepository,
+                mqttsnTopicRepository
             )
 
             val handler: NetworkMQTTSNMessageHandler = NetworkMQTTSNMessageHandlerImpl(
-                classMap,
-                NetworkMQTTSNMessageSenderImpl(messageBuilder)
+                handlerRegistry,
+                GrizzlyMQTTSNMessageSender(messageBuilder)
             )
 
             val gateway: MQTTSNGateway = GrizzlyMQTTSNGateway(

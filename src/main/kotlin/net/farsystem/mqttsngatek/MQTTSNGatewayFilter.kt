@@ -6,13 +6,11 @@ import org.glassfish.grizzly.filterchain.BaseFilter
 import org.glassfish.grizzly.filterchain.FilterChainContext
 import org.glassfish.grizzly.filterchain.NextAction
 import org.slf4j.LoggerFactory
-import java.net.Inet6Address
 import java.net.InetSocketAddress
-import java.net.NetworkInterface
 
 class MQTTSNGatewayFilter(
-    val networkMQTTSNMessageHandler: NetworkMQTTSNMessageHandler,
-    val gatewayConfig: GatewayConfig
+    val protocol: NetworkProtocol,
+    val messageReceiver: MQTTSNReceiver
 ) : BaseFilter() {
 
     private val logger = LoggerFactory.getLogger(this::class.java)
@@ -24,9 +22,9 @@ class MQTTSNGatewayFilter(
 
         logger.debug("gateway handleRead cxn ${System.identityHashCode(cxn)}")
 
-        val mqttsnContext = ctx.getMessage<MQTTSNContext>()
+        val mqttsnMessage = ctx.getMessage<MQTTSNMessage>()
 
-        val networkContext = when (val protocol = NetworkProtocol.valueOf(gatewayConfig.networkProtocol())) {
+        val networkContext = when (protocol) {
             NetworkProtocol.UDP6 -> {
                 val peerSocketAddress = ctx.address as InetSocketAddress
                 val localSocketAddress = cxn.localAddress as InetSocketAddress
@@ -38,25 +36,10 @@ class MQTTSNGatewayFilter(
             }
         }
 
-        return if (!mqttsnContext.isProcessed) {
-            logger.debug("gateway handleRead message not processed, suspending ${System.identityHashCode(cxn)}")
-            ctx.suspend()
-            networkMQTTSNMessageHandler.onReceive(networkContext, mqttsnContext.message) {
-                logger.debug("gateway handleRead message done processing, resuming ${System.identityHashCode(cxn)}")
-                mqttsnContext.response = it
-                ctx.resume()
-            }
-            ctx.suspendAction
-        } else {
-            logger.debug("gateway handleRead message processed, finishing ${System.identityHashCode(cxn)}")
-            mqttsnContext.response?.let {
-                logger.debug("gateway handleRead response found, sending ${System.identityHashCode(cxn)}")
-                ctx.write(networkContext.source, it, null)
-                mqttsnContext.reset()
-            }
-            ctx.stopAction
-        }
+        logger.debug("gateway handleRead, sending to handler. cxn: ${System.identityHashCode(cxn)}")
+        messageReceiver.receive(networkContext, mqttsnMessage)
 
+        return ctx.stopAction
 //        when (message.header.messageType) {
 //            MQTTSNMessageType.SEARCHGW -> {
 //                val searchGw = message.body as MQTTSNSearchGw
