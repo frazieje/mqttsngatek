@@ -16,7 +16,7 @@ class MQTTSNConnectHandler(
 
     private val logger = LoggerFactory.getLogger(this::class.java)
 
-    override suspend fun handleMessage(message: MQTTSNMessage, networkContext: NetworkContext): MQTTSNMessage {
+    override suspend fun handleMessage(networkContext: NetworkContext, message: MQTTSNMessage): MQTTSNMessage {
         val body = message.body as MQTTSNConnect
         logger.debug("CONNECT message received at handler with ClientID: ${body.clientId}")
 

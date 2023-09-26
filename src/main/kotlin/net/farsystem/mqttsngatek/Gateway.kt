@@ -40,15 +40,15 @@ class Gateway {
                 mqttsnTopicRepository
             )
 
-            val handler: NetworkMQTTSNMessageHandler = NetworkMQTTSNMessageHandlerImpl(
-                handlerRegistry,
-                GrizzlyMQTTSNMessageSender(messageBuilder)
+            val processor: MQTTSNMessageProcessor = DefaultMQTTSNMessageProcessor(
+                handlerRegistry
             )
 
-            val gateway: MQTTSNGateway = GrizzlyMQTTSNGateway(
-                config,
-                messageBuilder,
-                handler
+            val transport = GrizzlyMQTTSNTransport(config, messageBuilder)
+
+            val gateway: MQTTSNGateway = DefaultMQTTSNGateway(
+                transport,
+                processor
             )
 
             try {

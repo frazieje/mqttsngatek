@@ -4,5 +4,5 @@ import net.farsystem.mqttsngatek.MQTTSNMessage
 import net.farsystem.mqttsngatek.model.NetworkContext
 
 interface MQTTSNMessageHandler {
-    suspend fun handleMessage(message: MQTTSNMessage, networkContext: NetworkContext): MQTTSNMessage?
+    suspend fun handleMessage(networkContext: NetworkContext, message: MQTTSNMessage): MQTTSNMessage?
 }

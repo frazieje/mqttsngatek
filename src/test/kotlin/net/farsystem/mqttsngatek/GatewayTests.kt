@@ -4,12 +4,11 @@ import kotlinx.coroutines.test.runTest
 import net.farsystem.mqttsngatek.data.repository.InMemoryMQTTClientRepository
 import net.farsystem.mqttsngatek.data.repository.InMemoryMQTTSNClientRepository
 import net.farsystem.mqttsngatek.data.repository.InMemoryMQTTSNTopicRepository
-import net.farsystem.mqttsngatek.gateway.GrizzlyMQTTSNGateway
+import net.farsystem.mqttsngatek.gateway.DefaultMQTTSNGateway
 import net.farsystem.mqttsngatek.gateway.MQTTSNGateway
 import net.farsystem.mqttsngatek.mqtt.MQTTConnack
 import net.farsystem.mqttsngatek.mqtt.MQTTPingResp
 import net.farsystem.mqttsngatek.mqtt.MQTTReturnCode
-import net.farsystem.mqttsngatek.mqtt.paho.PahoMQTTClient
 import net.farsystem.mqttsngatek.mqttsnclient.NativeMQTTSNClient
 import org.glassfish.grizzly.filterchain.FilterChainBuilder
 import org.glassfish.grizzly.filterchain.TransportFilter
@@ -76,11 +75,8 @@ class GatewayTests {
         mqttsnTopicRepository
     )
 
-    private val networkMQTTSNMessageSender = GrizzlyMQTTSNMessageSender(mqttsnMessageBuilder)
-
-    private val networkMQTTSNMessageHandler = NetworkMQTTSNMessageHandlerImpl(
-        handlerRegistry,
-        networkMQTTSNMessageSender
+    private val mqttsnMessageProcessor = DefaultMQTTSNMessageProcessor(
+        handlerRegistry
     )
 
     private val captureFilter: CaptureFilter = CaptureFilter("client")
@@ -94,10 +90,11 @@ class GatewayTests {
     @BeforeAll
     fun setup() {
 
-        mqttsnGateway = GrizzlyMQTTSNGateway(
-            gatewayConfig,
-            mqttsnMessageBuilder,
-            networkMQTTSNMessageHandler
+        val transport = GrizzlyMQTTSNTransport(gatewayConfig, mqttsnMessageBuilder)
+
+        mqttsnGateway = DefaultMQTTSNGateway(
+            transport,
+            mqttsnMessageProcessor
         )
 
         mqttsnGateway.start()

@@ -16,7 +16,7 @@ class MQTTSNSubscribeHandler(
 
     private val logger = LoggerFactory.getLogger(this::class.java)
 
-    override suspend fun handleMessage(message: MQTTSNMessage, networkContext: NetworkContext): MQTTSNMessage? {
+    override suspend fun handleMessage(networkContext: NetworkContext, message: MQTTSNMessage): MQTTSNMessage? {
         val subscribeMsg = message.body as MQTTSNSubscribe
 
         logger.debug("SUBSCRIBE Received with messageId ${subscribeMsg.messageId}")
