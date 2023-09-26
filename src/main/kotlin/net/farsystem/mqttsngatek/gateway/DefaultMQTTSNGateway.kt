@@ -33,6 +33,7 @@ class DefaultMQTTSNGateway(
 //        gatewayScope.launch {
 //            while(true) {
 //                //gateway advertisement
+//                //delay()
 //            }
 //        }
     }
