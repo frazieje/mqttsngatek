@@ -2,7 +2,7 @@ package net.farsystem.mqttsngatek
 
 import java.nio.ByteBuffer
 
-class MQTTSNMessagBuilderImpl: MQTTSNMessagBuilder {
+class DefaultMQTTSNMessageBuilder: MQTTSNMessagBuilder {
 
     override fun decode(buffer: ByteBuffer): MQTTSNMessage {
         val bufferLength = buffer.remaining()
@@ -27,16 +27,16 @@ class MQTTSNMessagBuilderImpl: MQTTSNMessagBuilder {
 
         val type = MQTTSNMessageType.fromCode(buffer.get().toInt())
 
-        val header = MQTTSNHeaderImpl(type, messageLength)
+        val header = DefaultMQTTSNHeader(type, messageLength)
 
-        return MQTTSNMessageImpl(header, classMap[type]!!(buffer))
+        return DefaultMQTTSNMessage(header, classMap[type]!!(buffer))
     }
 
     override fun createMessage(type: MQTTSNMessageType, body: MQTTSNBody): MQTTSNMessage {
         val bodyLength = body.length()
         val headerLength = if (bodyLength <= 255) 2 else 4
-        val header = MQTTSNHeaderImpl(type, headerLength + bodyLength)
-        return MQTTSNMessageImpl(header, body)
+        val header = DefaultMQTTSNHeader(type, headerLength + bodyLength)
+        return DefaultMQTTSNMessage(header, body)
     }
 
     companion object {

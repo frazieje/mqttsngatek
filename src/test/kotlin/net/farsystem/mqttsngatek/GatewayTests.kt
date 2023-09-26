@@ -35,7 +35,7 @@ class GatewayTests {
 
     lateinit var cxn: UDPNIOConnection
 
-    private val mqttsnMessageBuilder = MQTTSNMessagBuilderImpl()
+    private val mqttsnMessageBuilder = DefaultMQTTSNMessageBuilder()
 
     private val gatewayConfig = object : GatewayConfig {
         override fun port(): Int = 10000

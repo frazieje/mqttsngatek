@@ -9,7 +9,7 @@ import java.nio.ByteBuffer
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class MQTTSNMessagBuilderTests {
 
-    private val builder: MQTTSNMessagBuilder = MQTTSNMessagBuilderImpl()
+    private val builder: MQTTSNMessagBuilder = DefaultMQTTSNMessageBuilder()
     private val client = NativeMQTTSNClient()
 
     private lateinit var mqttSnSearchGwMessage: MQTTSNMessage

@@ -19,7 +19,7 @@ class Gateway {
 
             val config = DefaultGatewayConfig()
 
-            val messageBuilder: MQTTSNMessagBuilder = MQTTSNMessagBuilderImpl()
+            val messageBuilder: MQTTSNMessagBuilder = DefaultMQTTSNMessageBuilder()
 
             val mqttsnClientRepository: MQTTSNClientRepository = InMemoryMQTTSNClientRepository()
 
