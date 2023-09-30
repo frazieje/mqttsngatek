@@ -61,11 +61,14 @@ class PahoMQTTClient(
         }
     }
 
-    override suspend fun subscribe(topic: String, qos: Int, messageId: Int): MQTTSuback {
+    override suspend fun subscribe(
+        topic: String,
+        qos: Int,
+        messageId: Int,
+        subscriber: (MQTTPublish) -> Unit
+    ): MQTTSuback {
         val mqttToken = awaitCallback {
-            client.subscribe(topic, qos, messageId, null, it) { topic, message ->
-                message
-            }
+            client.subscribe(topic, qos, messageId, null, it, buildSubscriber(subscriber))
         }!!
 
         if (mqttToken.exception == null) {
@@ -94,6 +97,21 @@ class PahoMQTTClient(
                 cont.cancel(exception)
             }
         })
+    }
+
+    private fun buildSubscriber(subscriber: (MQTTPublish) -> Unit): IMqttMessageListener {
+        return IMqttMessageListener { topic, message ->
+            subscriber(
+                MQTTPublish(
+                    topic,
+                    MQTTQoS.fromCode(message.qos),
+                    message.isRetained,
+                    message.isDuplicate,
+                    message.id,
+                    message.payload
+                )
+            )
+        }
     }
 
 }
