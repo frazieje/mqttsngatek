@@ -6,6 +6,7 @@ import net.farsystem.mqttsngatek.data.repository.InMemoryMQTTSNClientRepository
 import net.farsystem.mqttsngatek.data.repository.InMemoryMQTTSNTopicRepository
 import net.farsystem.mqttsngatek.gateway.DefaultMQTTSNGateway
 import net.farsystem.mqttsngatek.gateway.MQTTSNGateway
+import net.farsystem.mqttsngatek.mqtt.DefaultMQTTPublishHandler
 import net.farsystem.mqttsngatek.mqtt.MQTTConnack
 import net.farsystem.mqttsngatek.mqtt.MQTTPingResp
 import net.farsystem.mqttsngatek.mqtt.MQTTReturnCode
@@ -51,7 +52,7 @@ class GatewayTests {
         override fun brokerPort(): Int = 1883
     }
 
-    private val fakeMQTTClient = FakeMQTTClient()
+    private val fakeMQTTClient = FakeMQTTClient("testClientId")
 
     private val nativeClient = NativeMQTTSNClient()
 
@@ -67,18 +68,6 @@ class GatewayTests {
 //        PahoMQTTClient(clientId, host, port)
 //    }
 
-    private val handlerRegistry = MQTTSNMessageHandlerRegistry(
-        mqttsnMessageBuilder,
-        gatewayConfig,
-        mqttsnClientRepository,
-        mqttClientRepository,
-        mqttsnTopicRepository
-    )
-
-    private val mqttsnMessageProcessor = DefaultMQTTSNMessageProcessor(
-        handlerRegistry
-    )
-
     private val captureFilter: CaptureFilter = CaptureFilter("client")
 
     private val serverAddress = "::1"
@@ -91,6 +80,31 @@ class GatewayTests {
     fun setup() {
 
         val transport = GrizzlyMQTTSNTransport(gatewayConfig, mqttsnMessageBuilder)
+
+        val outgoingProcessor = OutgoingMQTTSNMessageProcessor(
+            transport
+        )
+
+        val publishHandler = DefaultMQTTPublishHandler(
+            mqttsnMessageBuilder,
+            mqttsnClientRepository,
+            mqttsnTopicRepository,
+            outgoingProcessor
+        )
+
+        val handlerRegistry = MQTTSNMessageHandlerRegistry(
+            mqttsnMessageBuilder,
+            gatewayConfig,
+            mqttsnClientRepository,
+            mqttClientRepository,
+            mqttsnTopicRepository,
+            publishHandler,
+            outgoingProcessor
+        )
+
+        val mqttsnMessageProcessor = IncomingMQTTSNMessageProcessor(
+            handlerRegistry
+        )
 
         mqttsnGateway = DefaultMQTTSNGateway(
             transport,

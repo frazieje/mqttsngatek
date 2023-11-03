@@ -2,6 +2,8 @@ package net.farsystem.mqttsngatek
 
 import net.farsystem.mqttsngatek.data.repository.*
 import net.farsystem.mqttsngatek.gateway.*
+import net.farsystem.mqttsngatek.mqtt.DefaultMQTTPublishHandler
+import net.farsystem.mqttsngatek.mqtt.MQTTPublishHandler
 import net.farsystem.mqttsngatek.mqtt.paho.PahoMQTTClient
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -21,6 +23,8 @@ class Gateway {
 
             val messageBuilder: MQTTSNMessagBuilder = DefaultMQTTSNMessageBuilder()
 
+            val transport: MQTTSNTransport = GrizzlyMQTTSNTransport(config, messageBuilder)
+
             val mqttsnClientRepository: MQTTSNClientRepository = InMemoryMQTTSNClientRepository()
 
             val mqttClientRepository: MQTTClientRepository = InMemoryMQTTClientRepository(
@@ -32,23 +36,34 @@ class Gateway {
                 emptyMap()
             )
 
+            val outgoingProcessor: MQTTSNMessageProcessor = OutgoingMQTTSNMessageProcessor(
+                transport
+            )
+
+            val mqttPublishHandler: MQTTPublishHandler = DefaultMQTTPublishHandler(
+                messageBuilder,
+                mqttsnClientRepository,
+                mqttsnTopicRepository,
+                outgoingProcessor
+            )
+
             val handlerRegistry = MQTTSNMessageHandlerRegistry(
                 messageBuilder,
                 config,
                 mqttsnClientRepository,
                 mqttClientRepository,
-                mqttsnTopicRepository
+                mqttsnTopicRepository,
+                mqttPublishHandler,
+                outgoingProcessor
             )
 
-            val processor: MQTTSNMessageProcessor = DefaultMQTTSNMessageProcessor(
+            val incomingProcessor: MQTTSNMessageProcessor = IncomingMQTTSNMessageProcessor(
                 handlerRegistry
             )
 
-            val transport = GrizzlyMQTTSNTransport(config, messageBuilder)
-
             val gateway: MQTTSNGateway = DefaultMQTTSNGateway(
                 transport,
-                processor
+                incomingProcessor
             )
 
             try {

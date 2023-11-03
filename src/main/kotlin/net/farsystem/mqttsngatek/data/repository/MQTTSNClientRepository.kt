@@ -7,5 +7,5 @@ interface MQTTSNClientRepository {
     suspend fun removeClient(client: MQTTSNClient)
     suspend fun getClient(clientId: String): MQTTSNClient?
     suspend fun getClient(networkContext: NetworkContext): MQTTSNClient?
-    suspend fun addOrUpdateClient(client: MQTTSNClient, networkContext: NetworkContext)
+    suspend fun addOrUpdateClient(client: MQTTSNClient)
 }

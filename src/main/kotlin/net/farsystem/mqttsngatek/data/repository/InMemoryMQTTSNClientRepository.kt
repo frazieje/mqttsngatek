@@ -32,10 +32,9 @@ class InMemoryMQTTSNClientRepository : MQTTSNClientRepository {
     }
 
     override suspend fun addOrUpdateClient(
-        client: MQTTSNClient,
-        networkContext: NetworkContext
+        client: MQTTSNClient
     ) = mutex.withLock {
         clientsById[client.clientId] = client
-        idsByContext[networkContext] = client.clientId
+        idsByContext[client.networkContext] = client.clientId
     }
 }

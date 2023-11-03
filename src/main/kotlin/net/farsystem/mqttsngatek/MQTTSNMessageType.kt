@@ -12,6 +12,7 @@ enum class MQTTSNMessageType(val code: Int) {
     WILLMSG(0x09),
     REGISTER(0x0A),
     REGACK(0x0B),
+    PUBLISH(0x0C),
     SUBSCRIBE(0x12),
     SUBACK(0x13),
     PINGREQ(0x16),

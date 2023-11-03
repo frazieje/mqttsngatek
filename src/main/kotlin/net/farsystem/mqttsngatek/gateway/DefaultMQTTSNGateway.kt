@@ -24,9 +24,7 @@ class DefaultMQTTSNGateway(
         logger.debug("Subscribing to gateway messages")
         mqttsnTransport.receive { networkContext, mqttsnMessage ->
             gatewayScope.launch {
-                processor.process(networkContext, mqttsnMessage)?.let {
-                    mqttsnTransport.send(networkContext.flip(), it)
-                }
+                processor.process(networkContext, mqttsnMessage)
             }
         }
         //TODO: Handle advertisement

@@ -34,7 +34,13 @@ class DefaultMQTTSNMessageBuilder: MQTTSNMessagBuilder {
 
     override fun createMessage(type: MQTTSNMessageType, body: MQTTSNBody): MQTTSNMessage {
         val bodyLength = body.length()
-        val headerLength = if (bodyLength <= 255) 2 else 4
+        val shortHeaderLength = 2
+        val longHeaderLength = 4
+        val headerLength = if ((bodyLength + shortHeaderLength) < UByte.MAX_VALUE.toInt()) {
+            shortHeaderLength
+        } else {
+            longHeaderLength
+        }
         val header = DefaultMQTTSNHeader(type, headerLength + bodyLength)
         return DefaultMQTTSNMessage(header, body)
     }
@@ -50,6 +56,7 @@ class DefaultMQTTSNMessageBuilder: MQTTSNMessagBuilder {
             MQTTSNMessageType.GWINFO to (MQTTSNGwInfo)::fromBuffer,
             MQTTSNMessageType.PINGREQ to (MQTTSNPingReq)::fromBuffer,
             MQTTSNMessageType.PINGRESP to (MQTTSNPingResp)::fromBuffer,
+            MQTTSNMessageType.PUBLISH to (MQTTSNPublish)::fromBuffer
         )
     }
 }

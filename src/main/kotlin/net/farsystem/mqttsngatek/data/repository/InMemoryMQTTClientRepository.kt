@@ -9,7 +9,7 @@ import net.farsystem.mqttsngatek.mqtt.MQTTClientFactory
 
 class InMemoryMQTTClientRepository(
     private val gatewayConfig: GatewayConfig,
-    private val mqttClientFactory: MQTTClientFactory
+    private val mqttClientFactory: MQTTClientFactory,
 ) : MQTTClientRepository {
 
     private val mutex = Mutex()

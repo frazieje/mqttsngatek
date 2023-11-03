@@ -1,31 +1,34 @@
-package net.farsystem.mqttsngatek.gateway
+package net.farsystem.mqttsngatek.gateway.handlers
 
 import net.farsystem.mqttsngatek.*
 import net.farsystem.mqttsngatek.data.repository.MQTTClientRepository
 import net.farsystem.mqttsngatek.data.repository.MQTTSNClientRepository
+import net.farsystem.mqttsngatek.gateway.MQTTSNMessageHandler
 import net.farsystem.mqttsngatek.model.MQTTSNClient
 import net.farsystem.mqttsngatek.model.NetworkContext
+import net.farsystem.mqttsngatek.model.NetworkContext.Companion.flip
 import net.farsystem.mqttsngatek.mqtt.*
 import org.slf4j.LoggerFactory
 
 class MQTTSNConnectHandler(
     private val mqttsnMessagBuilder: MQTTSNMessagBuilder,
     private val mqttsnClientRepository: MQTTSNClientRepository,
-    private val mqttClientRepository: MQTTClientRepository
+    private val mqttClientRepository: MQTTClientRepository,
+    private val outgoingProcessor: MQTTSNMessageProcessor,
 ) : MQTTSNMessageHandler {
 
     private val logger = LoggerFactory.getLogger(this::class.java)
 
-    override suspend fun handleMessage(networkContext: NetworkContext, message: MQTTSNMessage): MQTTSNMessage {
+    override suspend fun handleMessage(networkContext: NetworkContext, message: MQTTSNMessage) {
         val body = message.body as MQTTSNConnect
         logger.debug("CONNECT message received at handler with ClientID: ${body.clientId}")
 
         val snClient = mqttsnClientRepository.getClient(networkContext)?.apply {
             if (clientId != body.clientId) {
-                mqttsnClientRepository.addOrUpdateClient(this, networkContext)
+                mqttsnClientRepository.addOrUpdateClient(this)
             }
-        } ?: MQTTSNClient(body.clientId).also {
-            mqttsnClientRepository.addOrUpdateClient(it, networkContext)
+        } ?: MQTTSNClient(body.clientId, networkContext).also {
+            mqttsnClientRepository.addOrUpdateClient(it)
         }
 
         val client = mqttClientRepository.getOrCreate(snClient)
@@ -44,8 +47,7 @@ class MQTTSNConnectHandler(
 
         //TODO: Handle cleanSession
 
-        if (!body.willFlag) {
-
+        val response = if (!body.willFlag) {
             logger.error("will flag not set, connecting to broker")
             val mqttConnack = client.connect(options)
             logger.error("connection to broker done")
@@ -59,19 +61,18 @@ class MQTTSNConnectHandler(
                 MQTTReturnCode.REJECTED_UNACCEPTABLE_PROTOCOL -> MQTTSNReturnCode.REJECTED_NOT_SUPPORTED
             }
 
-            return mqttsnMessagBuilder.createMessage(
+            mqttsnMessagBuilder.createMessage(
                 MQTTSNMessageType.CONNACK,
                 MQTTSNConnack(rc)
             )
-
         } else {
             logger.error("will flag set, requesting will topic")
-            return mqttsnMessagBuilder.createMessage(
+            mqttsnMessagBuilder.createMessage(
                 MQTTSNMessageType.WILLTOPICREQ,
                 MQTTSNWillTopicReq()
             )
         }
-
+        outgoingProcessor.process(networkContext.flip(), response)
     }
 
 }

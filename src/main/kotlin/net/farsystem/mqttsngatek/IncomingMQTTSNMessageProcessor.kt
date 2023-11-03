@@ -5,13 +5,13 @@ import net.farsystem.mqttsngatek.model.NetworkContext
 import org.slf4j.LoggerFactory
 import java.lang.Exception
 
-class DefaultMQTTSNMessageProcessor(
+class IncomingMQTTSNMessageProcessor(
     private val handlerRegistry: MQTTSNMessageHandlerRegistry,
 ): MQTTSNMessageProcessor {
 
     private val logger = LoggerFactory.getLogger(this::class.java)
 
-    override suspend fun process(networkContext: NetworkContext, mqttsnMessage: MQTTSNMessage): MQTTSNMessage? =
+    override suspend fun process(networkContext: NetworkContext, mqttsnMessage: MQTTSNMessage) {
         try {
             logger.debug(mqttsnMessage.toString())
 
@@ -24,6 +24,6 @@ class DefaultMQTTSNMessageProcessor(
             handler?.handleMessage(networkContext, mqttsnMessage)
         } catch (e: Exception) {
             logger.error("Error processing MQTTSN Message $mqttsnMessage", e)
-            null
         }
+    }
 }

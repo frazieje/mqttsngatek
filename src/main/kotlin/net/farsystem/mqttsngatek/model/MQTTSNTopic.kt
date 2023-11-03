@@ -1,3 +1,5 @@
 package net.farsystem.mqttsngatek.model
 
-data class MQTTSNTopic(val topic: String, val id: Int, val isPredefined: Boolean = false)
+import net.farsystem.mqttsngatek.MQTTSNTopicType
+
+data class MQTTSNTopic(val type: MQTTSNTopicType, val topic: String, val id: Int? = 0)

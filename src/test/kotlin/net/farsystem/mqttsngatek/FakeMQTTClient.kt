@@ -3,7 +3,7 @@ package net.farsystem.mqttsngatek
 import net.farsystem.mqttsngatek.mqtt.*
 import java.util.concurrent.LinkedBlockingDeque
 
-class FakeMQTTClient : MQTTClient {
+class FakeMQTTClient(override val clientId: String) : MQTTClient {
 
     private val responseQueue = LinkedBlockingDeque<MQTTMessage>()
 
@@ -22,8 +22,13 @@ class FakeMQTTClient : MQTTClient {
         return responseQueue.removeFirst() as MQTTPingResp
     }
 
-    override suspend fun subscribe(topic: String, qos: Int, messageId: Int): MQTTSuback {
-        TODO("Not yet implemented")
+    override suspend fun subscribe(
+        topic: String,
+        qos: Int,
+        messageId: Int,
+        subscriber: (MQTTPublish) -> Unit
+    ): MQTTSuback {
+        return responseQueue.removeFirst() as MQTTSuback
     }
 
     override suspend fun disconnect() {

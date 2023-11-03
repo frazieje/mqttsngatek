@@ -1,7 +1,6 @@
 package net.farsystem.mqttsngatek.mqtt.paho
 
 import kotlinx.coroutines.suspendCancellableCoroutine
-import net.farsystem.mqttsngatek.MQTTSNSuback
 import net.farsystem.mqttsngatek.ManualKeepAliveMqttAsyncClient
 import net.farsystem.mqttsngatek.mqtt.*
 import org.eclipse.paho.client.mqttv3.*
@@ -13,7 +12,7 @@ import org.slf4j.LoggerFactory
 import kotlin.coroutines.resume
 
 class PahoMQTTClient(
-    clientId: String,
+    override val clientId: String,
     brokerHost: String,
     brokerPort: Int
 ) : MQTTClient {
@@ -68,7 +67,18 @@ class PahoMQTTClient(
         subscriber: (MQTTPublish) -> Unit
     ): MQTTSuback {
         val mqttToken = awaitCallback {
-            client.subscribe(topic, qos, messageId, null, it, buildSubscriber(subscriber))
+            client.subscribe(topic, qos, messageId, null, it) { topic, message ->
+                subscriber(
+                    MQTTPublish(
+                        topic,
+                        MQTTQoS.fromCode(message.qos),
+                        message.isRetained,
+                        message.isDuplicate,
+                        message.id,
+                        message.payload
+                    )
+                )
+            }
         }!!
 
         if (mqttToken.exception == null) {
@@ -98,20 +108,4 @@ class PahoMQTTClient(
             }
         })
     }
-
-    private fun buildSubscriber(subscriber: (MQTTPublish) -> Unit): IMqttMessageListener {
-        return IMqttMessageListener { topic, message ->
-            subscriber(
-                MQTTPublish(
-                    topic,
-                    MQTTQoS.fromCode(message.qos),
-                    message.isRetained,
-                    message.isDuplicate,
-                    message.id,
-                    message.payload
-                )
-            )
-        }
-    }
-
 }
