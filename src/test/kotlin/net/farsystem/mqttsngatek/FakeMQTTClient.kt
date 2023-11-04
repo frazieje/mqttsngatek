@@ -27,8 +27,8 @@ class FakeMQTTClient(override val clientId: String) : MQTTClient {
         qos: Int,
         messageId: Int,
         subscriber: (MQTTPublish) -> Unit
-    ): MQTTSuback {
-        return responseQueue.removeFirst() as MQTTSuback
+    ): MQTTSubAck {
+        return responseQueue.removeFirst() as MQTTSubAck
     }
 
     override suspend fun disconnect() {

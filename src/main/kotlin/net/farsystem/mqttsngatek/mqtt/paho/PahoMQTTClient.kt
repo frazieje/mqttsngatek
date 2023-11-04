@@ -3,9 +3,14 @@ package net.farsystem.mqttsngatek.mqtt.paho
 import kotlinx.coroutines.suspendCancellableCoroutine
 import net.farsystem.mqttsngatek.ManualKeepAliveMqttAsyncClient
 import net.farsystem.mqttsngatek.mqtt.*
-import org.eclipse.paho.client.mqttv3.*
+import org.eclipse.paho.client.mqttv3.IMqttActionListener
+import org.eclipse.paho.client.mqttv3.IMqttToken
+import org.eclipse.paho.client.mqttv3.MqttConnectOptions
+import org.eclipse.paho.client.mqttv3.MqttMessage
 import org.eclipse.paho.client.mqttv3.internal.wire.MqttConnack
 import org.eclipse.paho.client.mqttv3.internal.wire.MqttPingResp
+import org.eclipse.paho.client.mqttv3.internal.wire.MqttPubAck
+import org.eclipse.paho.client.mqttv3.internal.wire.MqttPubRec
 import org.eclipse.paho.client.mqttv3.internal.wire.MqttSuback
 import org.eclipse.paho.client.mqttv3.persist.MqttDefaultFilePersistence
 import org.slf4j.LoggerFactory
@@ -65,7 +70,7 @@ class PahoMQTTClient(
         qos: Int,
         messageId: Int,
         subscriber: (MQTTPublish) -> Unit
-    ): MQTTSuback {
+    ): MQTTSubAck {
         val mqttToken = awaitCallback {
             client.subscribe(topic, qos, messageId, null, it) { topic, message ->
                 subscriber(
@@ -84,7 +89,38 @@ class PahoMQTTClient(
         if (mqttToken.exception == null) {
             val suback = mqttToken.response as MqttSuback
             //we can just use the first index of grantedQos[] since MQTT-SN only sends one topic at a time
-            return MQTTSuback(MQTTQoS.fromCode(suback.grantedQos[0]))
+            return MQTTSubAck(MQTTQoS.fromCode(suback.grantedQos[0]), suback.messageId)
+        } else {
+            throw mqttToken.exception
+        }
+    }
+
+    override suspend fun publish(
+        topic: String,
+        payload: ByteArray,
+        qos: Int,
+        messageId: Int,
+        retained: Boolean
+    ): MQTTAck? {
+        logger.debug("Sending publish to mqtt broker, topic: $topic, qos: $qos, messageId: $messageId")
+        val message = MqttMessage(payload)
+        message.qos = qos
+        message.isRetained = retained
+        message.id = messageId
+        val mqttToken = awaitCallback { client.publish(topic, message, null, it) }!!
+        return if (mqttToken.exception == null) {
+            logger.debug("Publish Acknowledgement received from mqtt broker for messageId: $messageId")
+            when (MQTTQoS.fromCode(qos)) {
+                MQTTQoS.ZERO -> null
+                MQTTQoS.ONE -> {
+                    val puback = mqttToken.response as MqttPubAck
+                    MQTTPubAck(puback.messageId)
+                }
+                MQTTQoS.TWO -> {
+                    val pubrec = mqttToken.response as MqttPubRec
+                    MQTTPubRec(pubrec.messageId)
+                }
+            }
         } else {
             throw mqttToken.exception
         }

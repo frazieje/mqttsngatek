@@ -17,6 +17,8 @@ class InMemoryMQTTSNTopicRepository(
 
     private val topicsByClient = mutableMapOf<MQTTSNClient, MutableMap<String, MQTTSNTopic>>()
 
+    private val topicsById = mutableMapOf<MQTTSNClient, MutableMap<Int, MQTTSNTopic>>()
+
     private val predefinedTopicsByTopic = predefinedTopics.mapValues {
         MQTTSNTopic(MQTTSNTopicType.PREDEFINED, it.key, it.value)
     }
@@ -36,10 +38,21 @@ class InMemoryMQTTSNTopicRepository(
             val nextId = (lastTopicIdByClient[client]?.let { it + 1u } ?: 1u).toUShort()
             lastTopicIdByClient[client] = nextId
             val newTopic = MQTTSNTopic(MQTTSNTopicType.NORMAL, topic, nextId.toInt())
-            topicsByClient[client] = mutableMapOf(Pair(topic, newTopic))
+            topicsByClient[client]?.let {
+                it[topic] = newTopic
+            } ?: run {
+                topicsByClient[client] = mutableMapOf(Pair(topic, newTopic))
+            }
+            topicsById[client]?.let {
+                it[newTopic.id!!] = newTopic
+            } ?: run {
+                topicsById[client] = mutableMapOf(Pair(newTopic.id!!, newTopic))
+            }
             newTopic
         }
     }
+
+    override suspend fun getTopic(client: MQTTSNClient, topicId: Int) = topicsById[client]?.get(topicId)
 
     override suspend fun getPredefinedTopic(id: Int): MQTTSNTopic? = predefinedTopicsById[id]
 
@@ -51,12 +64,14 @@ class InMemoryMQTTSNTopicRepository(
     override suspend fun removeTopic(client: MQTTSNClient, topic: MQTTSNTopic) {
         mutex.withLock {
             topicsByClient[client]?.remove(topic.topic)
+            topicsById[client]?.remove(topic.id)
         }
     }
 
     override suspend fun removeAllTopics(client: MQTTSNClient) {
         mutex.withLock {
             topicsByClient[client]?.clear()
+            topicsById[client]?.clear()
         }
     }
 }

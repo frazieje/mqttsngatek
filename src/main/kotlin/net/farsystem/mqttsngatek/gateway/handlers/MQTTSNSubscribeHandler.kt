@@ -55,7 +55,7 @@ class MQTTSNSubscribeHandler(
                 else 0
                 MQTTSNSuback(
                     MQTTSNQoS.fromCode(mqttSuback.grantedQos.code),
-                    subscribeMsg.messageId,
+                    mqttSuback.messageId,
                     mqttsnTopicId,
                     MQTTSNReturnCode.ACCEPTED
                 )
@@ -67,7 +67,7 @@ class MQTTSNSubscribeHandler(
                 }
                 MQTTSNSuback(
                     MQTTSNQoS.fromCode(mqttSuback.grantedQos.code),
-                    subscribeMsg.messageId,
+                    mqttSuback.messageId,
                     returnCode = MQTTSNReturnCode.ACCEPTED
                 )
             }
@@ -79,7 +79,7 @@ class MQTTSNSubscribeHandler(
                     }
                     MQTTSNSuback(
                         MQTTSNQoS.fromCode(mqttSuback.grantedQos.code),
-                        subscribeMsg.messageId,
+                        mqttSuback.messageId,
                         predefinedTopic.id!!,
                         MQTTSNReturnCode.ACCEPTED
                     )

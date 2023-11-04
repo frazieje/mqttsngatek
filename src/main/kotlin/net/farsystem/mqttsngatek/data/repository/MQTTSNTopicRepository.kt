@@ -6,6 +6,7 @@ import net.farsystem.mqttsngatek.model.MQTTSNTopic
 interface MQTTSNTopicRepository {
 
     suspend fun getTopic(client: MQTTSNClient, topic: String): MQTTSNTopic?
+    suspend fun getTopic(client: MQTTSNClient, topicId: Int): MQTTSNTopic?
     suspend fun getOrCreateTopic(client: MQTTSNClient, topic: String): MQTTSNTopic
     suspend fun getPredefinedTopic(id: Int): MQTTSNTopic?
     suspend fun getPredefinedTopic(topic: String): MQTTSNTopic?

@@ -13,10 +13,17 @@ enum class MQTTSNMessageType(val code: Int) {
     REGISTER(0x0A),
     REGACK(0x0B),
     PUBLISH(0x0C),
+    PUBACK(0x0D),
+    PUBCOMP(0x0E),
+    PUBREC(0x0F),
+    PUBREL(0x10),
     SUBSCRIBE(0x12),
     SUBACK(0x13),
+    UNSUBSCRIBE(0x14),
+    UNSUBACK(0x15),
     PINGREQ(0x16),
-    PINGRESP(0x17);
+    PINGRESP(0x17),
+    DISCONNECT(0x18);
 
     companion object {
         private val VALUES = values()
