@@ -13,7 +13,7 @@ class IncomingMQTTSNMessageProcessor(
 
     override suspend fun process(networkContext: NetworkContext, mqttsnMessage: MQTTSNMessage) {
         try {
-            logger.debug(mqttsnMessage.toString())
+            logger.debug("process incoming message $mqttsnMessage from $networkContext")
 
             val handler = handlerRegistry.resolve(mqttsnMessage.header.messageType)
 

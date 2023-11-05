@@ -17,6 +17,14 @@ JNIEXPORT jobject JNICALL Java_net_farsystem_mqttsngatek_mqttsnclient_NativeMQTT
 
 /*
  * Class:     net_farsystem_mqttsngatek_mqttsnclient_NativeMQTTSNClient
+ * Method:    serializePublishNormal
+ * Signature: (ZIZII[B)Ljava/nio/ByteBuffer;
+ */
+JNIEXPORT jobject JNICALL Java_net_farsystem_mqttsngatek_mqttsnclient_NativeMQTTSNClient_serializePublishNormal
+  (JNIEnv *, jobject, jboolean, jint, jboolean, jint, jint, jbyteArray);
+
+/*
+ * Class:     net_farsystem_mqttsngatek_mqttsnclient_NativeMQTTSNClient
  * Method:    serializeSubscribeNormal
  * Signature: (ZIILjava/lang/String;)Ljava/nio/ByteBuffer;
  */
@@ -42,10 +50,10 @@ JNIEXPORT jobject JNICALL Java_net_farsystem_mqttsngatek_mqttsnclient_NativeMQTT
 /*
  * Class:     net_farsystem_mqttsngatek_mqttsnclient_NativeMQTTSNClient
  * Method:    serializeRegister
- * Signature: (IILjava/lang/String;)Ljava/nio/ByteBuffer;
+ * Signature: (ILjava/lang/String;)Ljava/nio/ByteBuffer;
  */
 JNIEXPORT jobject JNICALL Java_net_farsystem_mqttsngatek_mqttsnclient_NativeMQTTSNClient_serializeRegister
-  (JNIEnv *, jobject, jint, jint, jstring);
+  (JNIEnv *, jobject, jint, jstring);
 
 /*
  * Class:     net_farsystem_mqttsngatek_mqttsnclient_NativeMQTTSNClient
@@ -93,6 +101,38 @@ JNIEXPORT jobject JNICALL Java_net_farsystem_mqttsngatek_mqttsnclient_NativeMQTT
  * Signature: (Ljava/nio/ByteBuffer;)Lnet/farsystem/mqttsngatek/mqttsnclient/MQTTSNConnAck;
  */
 JNIEXPORT jobject JNICALL Java_net_farsystem_mqttsngatek_mqttsnclient_NativeMQTTSNClient_deserializeConnAck
+  (JNIEnv *, jobject, jobject);
+
+/*
+ * Class:     net_farsystem_mqttsngatek_mqttsnclient_NativeMQTTSNClient
+ * Method:    deserializePubAck
+ * Signature: (Ljava/nio/ByteBuffer;)Lnet/farsystem/mqttsngatek/mqttsnclient/MQTTSNPubAck;
+ */
+JNIEXPORT jobject JNICALL Java_net_farsystem_mqttsngatek_mqttsnclient_NativeMQTTSNClient_deserializePubAck
+  (JNIEnv *, jobject, jobject);
+
+/*
+ * Class:     net_farsystem_mqttsngatek_mqttsnclient_NativeMQTTSNClient
+ * Method:    deserializeRegAck
+ * Signature: (Ljava/nio/ByteBuffer;)Lnet/farsystem/mqttsngatek/mqttsnclient/MQTTSNRegAck;
+ */
+JNIEXPORT jobject JNICALL Java_net_farsystem_mqttsngatek_mqttsnclient_NativeMQTTSNClient_deserializeRegAck
+  (JNIEnv *, jobject, jobject);
+
+/*
+ * Class:     net_farsystem_mqttsngatek_mqttsnclient_NativeMQTTSNClient
+ * Method:    deserializeSubAck
+ * Signature: (Ljava/nio/ByteBuffer;)Lnet/farsystem/mqttsngatek/mqttsnclient/MQTTSNSubAck;
+ */
+JNIEXPORT jobject JNICALL Java_net_farsystem_mqttsngatek_mqttsnclient_NativeMQTTSNClient_deserializeSubAck
+  (JNIEnv *, jobject, jobject);
+
+/*
+ * Class:     net_farsystem_mqttsngatek_mqttsnclient_NativeMQTTSNClient
+ * Method:    deserializePublish
+ * Signature: (Ljava/nio/ByteBuffer;)Lnet/farsystem/mqttsngatek/mqttsnclient/MQTTSNPublish;
+ */
+JNIEXPORT jobject JNICALL Java_net_farsystem_mqttsngatek_mqttsnclient_NativeMQTTSNClient_deserializePublish
   (JNIEnv *, jobject, jobject);
 
 #ifdef __cplusplus

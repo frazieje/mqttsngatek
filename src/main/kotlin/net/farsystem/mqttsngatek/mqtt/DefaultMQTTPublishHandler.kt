@@ -28,7 +28,7 @@ class DefaultMQTTPublishHandler(
         handler.launch {
             mqttsnClientRepository.getClient(client.clientId)?.run {
                 logger.debug("MQTTSN client $this found for MQTT client $client.")
-                val response = mqttsnTopicRepository.getTopic(this, message.topic)?.let {
+                val publishBody = mqttsnTopicRepository.getTopic(this, message.topic)?.let {
                     logger.debug("MQTTSN Normal Topic found $it")
                     MQTTSNPublish(
                         message.dup,
@@ -52,9 +52,9 @@ class DefaultMQTTPublishHandler(
                         it.id,
                         message.payload
                     )
-                }?.let {
-                    val publish = mqttsnMessageBuilder.createMessage(MQTTSNMessageType.PUBLISH, it)
-                    outgoingProcessor.process(networkContext.flip(), publish)
+                }
+                val response = publishBody?.let {
+                    mqttsnMessageBuilder.createMessage(MQTTSNMessageType.PUBLISH, it)
                 } ?: run {
                     logger.debug("No MQTTSN Topic found, Registration needed")
                     val topic = mqttsnTopicRepository.getOrCreateTopic(this, message.topic)
@@ -63,9 +63,12 @@ class DefaultMQTTPublishHandler(
                         message.messageId,
                         topic.topic
                     )
-                    val register = mqttsnMessageBuilder.createMessage(MQTTSNMessageType.REGISTER, registerBody)
-                    outgoingProcessor.process(networkContext.flip(), register)
+                    mqttsnMessageBuilder.createMessage(MQTTSNMessageType.REGISTER, registerBody)
                 }
+                outgoingProcessor.process(networkContext.flip(), response)
+            } ?: run {
+                logger.debug("MQTTSN client not found for MQTT client $client.")
+                //TODO: disconnect/dispose MQTT client?
             }
         }
     }

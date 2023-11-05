@@ -4,10 +4,7 @@ import net.farsystem.mqttsngatek.data.repository.MQTTClientRepository
 import net.farsystem.mqttsngatek.data.repository.MQTTSNClientRepository
 import net.farsystem.mqttsngatek.data.repository.MQTTSNTopicRepository
 import net.farsystem.mqttsngatek.gateway.*
-import net.farsystem.mqttsngatek.gateway.handlers.MQTTSNConnectHandler
-import net.farsystem.mqttsngatek.gateway.handlers.MQTTSNPingReqHandler
-import net.farsystem.mqttsngatek.gateway.handlers.MQTTSNSearchGwHandler
-import net.farsystem.mqttsngatek.gateway.handlers.MQTTSNSubscribeHandler
+import net.farsystem.mqttsngatek.gateway.handlers.*
 import net.farsystem.mqttsngatek.mqtt.MQTTPublishHandler
 
 class MQTTSNMessageHandlerRegistry(
@@ -39,6 +36,19 @@ class MQTTSNMessageHandlerRegistry(
             mqttClientRepository,
             mqttsnTopicRepository,
             publishHandler,
+            outgoingProcessor
+        ),
+        MQTTSNMessageType.REGISTER to MQTTSNRegisterHandler(
+            messageBuilder,
+            mqttsnClientRepository,
+            mqttsnTopicRepository,
+            outgoingProcessor
+        ),
+        MQTTSNMessageType.PUBLISH to MQTTSNPublishHandler(
+            messageBuilder,
+            mqttsnClientRepository,
+            mqttsnTopicRepository,
+            mqttClientRepository,
             outgoingProcessor
         )
     )

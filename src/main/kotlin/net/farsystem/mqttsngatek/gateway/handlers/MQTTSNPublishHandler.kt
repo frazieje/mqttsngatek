@@ -49,6 +49,7 @@ class MQTTSNPublishHandler(
                         it.topic,
                         publishMsg.payload,
                         publishMsg.qos.code,
+                        publishMsg.dup,
                         publishMsg.messageId,
                         publishMsg.retained
                     )?.toSnAck(publishMsg.topicId)
@@ -72,6 +73,7 @@ class MQTTSNPublishHandler(
                         it.topic,
                         publishMsg.payload,
                         publishMsg.qos.code,
+                        publishMsg.dup,
                         publishMsg.messageId,
                         publishMsg.retained
                     )?.toSnAck(publishMsg.topicId)
@@ -93,6 +95,7 @@ class MQTTSNPublishHandler(
                     publishMsg.topic!!,
                     publishMsg.payload,
                     publishMsg.qos.code,
+                    publishMsg.dup,
                     publishMsg.messageId,
                     publishMsg.retained
                 )?.toSnAck()

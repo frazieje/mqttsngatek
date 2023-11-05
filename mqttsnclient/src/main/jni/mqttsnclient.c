@@ -2,6 +2,18 @@
 #include "MQTTSNPacket.h"
 #include "net_farsystem_mqttsngatek_mqttsnclient_NativeMQTTSNClient.h"
 
+void loadByteBuffer(JNIEnv *env, unsigned char *buf, int len, jobject *obj) {
+    jbyteArray bytes = (jbyteArray)(*env)->NewByteArray(env, len);
+
+    (*env)->SetByteArrayRegion(env, bytes, 0, len, (jbyte*)buf);
+
+    jclass bufcls = (*env)->FindClass(env, "java/nio/ByteBuffer");
+    jmethodID wrap = (*env)->GetStaticMethodID(env, bufcls, "wrap", "([B)Ljava/nio/ByteBuffer;");
+    *obj = (jobject)(*env)->CallStaticObjectMethod(env, bufcls, wrap, bytes);
+
+    (*env)->DeleteLocalRef(env, bytes);
+}
+
 JNIEXPORT jobject JNICALL Java_net_farsystem_mqttsngatek_mqttsnclient_NativeMQTTSNClient_serializeConnect(
     JNIEnv *env, jobject thisObj, jstring clientId, jint duration, jboolean isCleanSession, jboolean isWillFlag) {
 
@@ -30,6 +42,68 @@ JNIEXPORT jobject JNICALL Java_net_farsystem_mqttsngatek_mqttsnclient_NativeMQTT
 
     return buffer;
 }
+
+/*
+ * Class:     net_farsystem_mqttsngatek_mqttsnclient_NativeMQTTSNClient
+ * Method:    serializePublishNormal
+ * Signature: (ZIZII)Ljava/nio/ByteBuffer;
+ */
+JNIEXPORT jobject JNICALL Java_net_farsystem_mqttsngatek_mqttsnclient_NativeMQTTSNClient_serializePublishNormal
+  (JNIEnv *env, jobject thisObj, jboolean dup, jint qos, jboolean retained, jint messageId, jint topicId, jbyteArray payload) {
+
+    unsigned short topicIdShort = (unsigned short)topicId;
+
+    MQTTSN_topicid topicType;
+
+    topicType.type = MQTTSN_TOPIC_TYPE_NORMAL;
+    topicType.data.id = topicIdShort;
+
+    unsigned char dupChar = (unsigned char)dup;
+    unsigned char retainedChar = (unsigned char)retained;
+    int qosInt = (int)qos;
+    unsigned short messageIdShort = (unsigned short)messageId;
+
+    jboolean isCopy;
+    jbyte * payloadJBytes = (*env)->GetByteArrayElements(env, payload, &isCopy);
+
+    int payloadLength = (*env)->GetArrayLength(env, payload);
+
+    unsigned char *payloadBuf = (unsigned char *)payloadJBytes;
+
+    int len = MQTTSNPacket_len(6 + payloadLength);
+
+    unsigned char buf[len];
+
+    MQTTSNSerialize_publish(buf, len, dupChar, qosInt, retainedChar, messageIdShort, topicType, payloadBuf, payloadLength);
+
+    (*env)->ReleaseByteArrayElements(env, payload, payloadJBytes, 0);
+
+    jobject buffer;
+    loadByteBuffer(env, buf, len, &buffer);
+
+    return buffer;
+}
+
+/*
+ * Class:     net_farsystem_mqttsngatek_mqttsnclient_NativeMQTTSNClient
+ * Method:    serializePublishPredefined
+ * Signature: (ZIZII)Ljava/nio/ByteBuffer;
+ */
+//JNIEXPORT jobject JNICALL Java_net_farsystem_mqttsngatek_mqttsnclient_NativeMQTTSNClient_serializePublishPredefined
+//  (JNIEnv *env, jobject thisObj, jboolean dup, jint qos, jboolean retained, jint messageId, jint topicId, jbyteArray payload) {
+//
+//}
+
+/*
+ * Class:     net_farsystem_mqttsngatek_mqttsnclient_NativeMQTTSNClient
+ * Method:    serializePublishShortName
+ * Signature: (ZIZILjava/lang/String;)Ljava/nio/ByteBuffer;
+ */
+//JNIEXPORT jobject JNICALL Java_net_farsystem_mqttsngatek_mqttsnclient_NativeMQTTSNClient_serializePublishShortName
+//  (JNIEnv *env, jobject thisObj, jboolean dup, jint qos, jboolean retained, jint messageId, jstring topic, jbyteArray payload) {
+//
+//}
+
 
 int subscribeLength(MQTTSN_topicid* topicFilter)
 {
@@ -152,14 +226,14 @@ int registerLength(MQTTSNString *topicname)
 }
 
 JNIEXPORT jobject JNICALL Java_net_farsystem_mqttsngatek_mqttsnclient_NativeMQTTSNClient_serializeRegister(
-    JNIEnv *env, jobject thisObj, jint topicId, jint messageId, jstring topic) {
+    JNIEnv *env, jobject thisObj, jint messageId, jstring topic) {
 
     MQTTSNString topicstr;
 
     topicstr.cstring = ((char *)((*env)->GetStringUTFChars(env, topic, 0)));
     topicstr.lenstring.len = strlen(topicstr.cstring);
 
-    unsigned short topicIdShort = (unsigned short)topicId;
+    unsigned short topicIdShort = 0;
     unsigned short messageIdShort = (unsigned short)messageId;
 
     int len = MQTTSNPacket_len(registerLength(&topicstr));
@@ -250,7 +324,7 @@ JNIEXPORT jobject JNICALL Java_net_farsystem_mqttsngatek_mqttsnclient_NativeMQTT
 
     unsigned char buf[len];
 
-    (*env)->GetByteArrayRegion(env, bytes, 0, len, buf);
+    (*env)->GetByteArrayRegion(env, bytes, 0, len, (jbyte *)buf);
 
     unsigned char gatewayId;
     unsigned short gatewayAddressLen;
@@ -267,7 +341,7 @@ JNIEXPORT jobject JNICALL Java_net_farsystem_mqttsngatek_mqttsnclient_NativeMQTT
     jclass cls_gwinfo = (*env)->FindClass(env, "net/farsystem/mqttsngatek/mqttsnclient/MQTTSNGwInfo");
     jmethodID cnstr_gwinfo = (*env)->GetMethodID(env, cls_gwinfo, "<init>", "(ILjava/lang/String;)V");
 
-    jstring gwaddress = (*env)->NewStringUTF(env, gatewayAddress);
+    jstring gwaddress = (*env)->NewStringUTF(env, (char *)gatewayAddress);
 
     jobject obj_gwinfo = (*env)->NewObject(env, cls_gwinfo, cnstr_gwinfo, (int)gatewayId, gwaddress);
 
@@ -322,9 +396,11 @@ JNIEXPORT jobject JNICALL Java_net_farsystem_mqttsngatek_mqttsnclient_NativeMQTT
 
     unsigned char buf[len];
 
-    (*env)->GetByteArrayRegion(env, bytes, 0, len, buf);
+    (*env)->GetByteArrayRegion(env, bytes, 0, len, (jbyte *)buf);
 
     int rc = MQTTSNDeserialize_pingresp(buf, len);
+
+    (*env)->DeleteLocalRef(env, bytes);
 
     if (rc != 1) {
         return NULL;
@@ -355,11 +431,13 @@ JNIEXPORT jobject JNICALL Java_net_farsystem_mqttsngatek_mqttsnclient_NativeMQTT
 
     unsigned char buf[len];
 
-    (*env)->GetByteArrayRegion(env, bytes, 0, len, buf);
+    (*env)->GetByteArrayRegion(env, bytes, 0, len, (jbyte *)buf);
 
     int connackrc;
 
     int rc = MQTTSNDeserialize_connack(&connackrc, buf, len);
+
+    (*env)->DeleteLocalRef(env, bytes);
 
     if (rc != 1) {
         return NULL;
@@ -371,4 +449,167 @@ JNIEXPORT jobject JNICALL Java_net_farsystem_mqttsngatek_mqttsnclient_NativeMQTT
     jobject obj_connack = (*env)->NewObject(env, cls_connack, cnstr_connack, connackrc);
 
     return obj_connack;
+}
+
+JNIEXPORT jobject JNICALL Java_net_farsystem_mqttsngatek_mqttsnclient_NativeMQTTSNClient_deserializePubAck
+  (JNIEnv *env, jobject thisObj, jobject byteBuffer) {
+    jclass cls_ByteBuffer = (*env)->GetObjectClass(env, byteBuffer);
+
+    jmethodID limit = (*env)->GetMethodID(env, cls_ByteBuffer, "limit", "()I");
+    jmethodID getBA = (*env)->GetMethodID(env, cls_ByteBuffer, "get", "([B)Ljava/nio/ByteBuffer;");
+
+    int len = (int)(*env)->CallIntMethod(env, byteBuffer, limit);
+
+    jbyteArray bytes = (jbyteArray)(*env)->NewByteArray(env, len);
+
+    jobject obj_ByteBuffer = (*env)->CallObjectMethod(env, byteBuffer, getBA, bytes);
+
+    unsigned char buf[len];
+
+    (*env)->GetByteArrayRegion(env, bytes, 0, len, (jbyte *)buf);
+
+    unsigned short topicId;
+    unsigned short messageId;
+    unsigned char returnCode;
+
+    int rc = MQTTSNDeserialize_puback(&topicId, &messageId, &returnCode, buf, len);
+
+    (*env)->DeleteLocalRef(env, bytes);
+
+    if (rc != 1) {
+        return NULL;
+    }
+
+    jclass cls_puback = (*env)->FindClass(env, "net/farsystem/mqttsngatek/mqttsnclient/MQTTSNPubAck");
+    jmethodID cnstr_puback = (*env)->GetMethodID(env, cls_puback, "<init>", "(III)V");
+
+    jobject obj_puback = (*env)->NewObject(env, cls_puback, cnstr_puback, (int)messageId, (int) topicId, (int)returnCode);
+
+    return obj_puback;
+}
+
+JNIEXPORT jobject JNICALL Java_net_farsystem_mqttsngatek_mqttsnclient_NativeMQTTSNClient_deserializeRegAck
+  (JNIEnv *env, jobject thisObj, jobject byteBuffer) {
+    jclass cls_ByteBuffer = (*env)->GetObjectClass(env, byteBuffer);
+
+    jmethodID limit = (*env)->GetMethodID(env, cls_ByteBuffer, "limit", "()I");
+    jmethodID getBA = (*env)->GetMethodID(env, cls_ByteBuffer, "get", "([B)Ljava/nio/ByteBuffer;");
+
+    int len = (int)(*env)->CallIntMethod(env, byteBuffer, limit);
+
+    jbyteArray bytes = (jbyteArray)(*env)->NewByteArray(env, len);
+
+    jobject obj_ByteBuffer = (*env)->CallObjectMethod(env, byteBuffer, getBA, bytes);
+
+    unsigned char buf[len];
+
+    (*env)->GetByteArrayRegion(env, bytes, 0, len, (jbyte *)buf);
+
+    unsigned short topicId;
+    unsigned short messageId;
+    unsigned char returnCode;
+
+    int rc = MQTTSNDeserialize_regack(&topicId, &messageId, &returnCode, buf, len);
+
+    (*env)->DeleteLocalRef(env, bytes);
+
+    if (rc != 1) {
+        return NULL;
+    }
+
+    jclass cls_regack = (*env)->FindClass(env, "net/farsystem/mqttsngatek/mqttsnclient/MQTTSNRegAck");
+    jmethodID cnstr_regack = (*env)->GetMethodID(env, cls_regack, "<init>", "(III)V");
+
+    jobject obj_regack = (*env)->NewObject(env, cls_regack, cnstr_regack, (int)messageId, (int) topicId, (int)returnCode);
+
+    return obj_regack;
+}
+
+JNIEXPORT jobject JNICALL Java_net_farsystem_mqttsngatek_mqttsnclient_NativeMQTTSNClient_deserializeSubAck
+  (JNIEnv *env, jobject thisObj, jobject byteBuffer) {
+    jclass cls_ByteBuffer = (*env)->GetObjectClass(env, byteBuffer);
+
+    jmethodID limit = (*env)->GetMethodID(env, cls_ByteBuffer, "limit", "()I");
+    jmethodID getBA = (*env)->GetMethodID(env, cls_ByteBuffer, "get", "([B)Ljava/nio/ByteBuffer;");
+
+    int len = (int)(*env)->CallIntMethod(env, byteBuffer, limit);
+
+    jbyteArray bytes = (jbyteArray)(*env)->NewByteArray(env, len);
+
+    jobject obj_ByteBuffer = (*env)->CallObjectMethod(env, byteBuffer, getBA, bytes);
+
+    unsigned char buf[len];
+
+    (*env)->GetByteArrayRegion(env, bytes, 0, len, (jbyte *)buf);
+
+    int qos;
+    unsigned short topicId;
+    unsigned short messageId;
+    unsigned char returnCode;
+
+    int rc = MQTTSNDeserialize_suback(&qos, &topicId, &messageId, &returnCode, buf, len);
+
+    (*env)->DeleteLocalRef(env, bytes);
+
+    if (rc != 1) {
+        return NULL;
+    }
+
+    jclass cls_suback = (*env)->FindClass(env, "net/farsystem/mqttsngatek/mqttsnclient/MQTTSNSubAck");
+    jmethodID cnstr_suback = (*env)->GetMethodID(env, cls_suback, "<init>", "(IIII)V");
+
+    jobject obj_suback = (*env)->NewObject(env, cls_suback, cnstr_suback, qos, (int)messageId, (int) topicId, (int)returnCode);
+
+    return obj_suback;
+}
+
+JNIEXPORT jobject JNICALL Java_net_farsystem_mqttsngatek_mqttsnclient_NativeMQTTSNClient_deserializePublish
+  (JNIEnv *env, jobject thisObj, jobject byteBuffer) {
+    jclass cls_ByteBuffer = (*env)->GetObjectClass(env, byteBuffer);
+
+    jmethodID limit = (*env)->GetMethodID(env, cls_ByteBuffer, "limit", "()I");
+    jmethodID getBA = (*env)->GetMethodID(env, cls_ByteBuffer, "get", "([B)Ljava/nio/ByteBuffer;");
+
+    int len = (int)(*env)->CallIntMethod(env, byteBuffer, limit);
+
+    jbyteArray bytes = (jbyteArray)(*env)->NewByteArray(env, len);
+
+    jobject obj_ByteBuffer = (*env)->CallObjectMethod(env, byteBuffer, getBA, bytes);
+
+    unsigned char buf[len];
+
+    (*env)->GetByteArrayRegion(env, bytes, 0, len, (jbyte *)buf);
+
+    unsigned char dup;
+    int qos;
+    unsigned char retained;
+    unsigned short topicId;
+    unsigned short messageId;
+    MQTTSN_topicid topicType;
+    unsigned char *payload;
+    int payloadLen;
+    jstring topic = NULL;
+
+    int rc = MQTTSNDeserialize_publish(&dup, &qos, &retained, &messageId, &topicType, &payload, &payloadLen, buf, len);
+
+    if (topicType.type == MQTTSN_TOPIC_TYPE_NORMAL || topicType.type == MQTTSN_TOPIC_TYPE_PREDEFINED) {
+        topicId = topicType.data.id;
+    } else if (topicType.type == MQTTSN_TOPIC_TYPE_SHORT) {
+        topic = (*env)->NewStringUTF(env, (char *)topicType.data.short_name);
+    }
+
+    (*env)->DeleteLocalRef(env, bytes);
+
+    jbyteArray payloadBytes = (jbyteArray)(*env)->NewByteArray(env, payloadLen);
+
+    (*env)->SetByteArrayRegion(env, payloadBytes, 0, payloadLen, (jbyte*)payload);
+
+    jclass cls_publish = (*env)->FindClass(env, "net/farsystem/mqttsngatek/mqttsnclient/MQTTSNPublish");
+    jmethodID cnstr_publish = (*env)->GetMethodID(env, cls_publish, "<init>", "(ZIZILjava/lang/String;I[B)V");
+
+    jobject obj_publish = (*env)->NewObject(env, cls_publish, cnstr_publish, dup, qos, retained, (int)messageId, topic, (int)topicId, payloadBytes);
+
+    (*env)->DeleteLocalRef(env, payloadBytes);
+
+    return obj_publish;
 }

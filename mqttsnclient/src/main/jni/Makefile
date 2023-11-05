@@ -34,6 +34,7 @@ SIZE            := '$(GNU_INSTALL_ROOT)/bin/size'
 C_SOURCE_FILES += \
 $(abspath ../../../paho.mqtt-sn.embedded-c/MQTTSNPacket/src/MQTTSNPacket.c) \
 $(abspath ../../../paho.mqtt-sn.embedded-c/MQTTSNPacket/src/MQTTSNConnectClient.c) \
+$(abspath ../../../paho.mqtt-sn.embedded-c/MQTTSNPacket/src/MQTTSNDeserializePublish.c) \
 $(abspath ../../../paho.mqtt-sn.embedded-c/MQTTSNPacket/src/MQTTSNSerializePublish.c) \
 $(abspath ../../../paho.mqtt-sn.embedded-c/MQTTSNPacket/src/MQTTSNSubscribeClient.c) \
 $(abspath ../../../paho.mqtt-sn.embedded-c/MQTTSNPacket/src/MQTTSNSearchClient.c) \

@@ -12,6 +12,15 @@ public class NativeMQTTSNClient implements MQTTSNClient {
     public native ByteBuffer serializeConnect(String clientId, int duration, boolean cleanSession, boolean willFlag);
 
     @Override
+    public native ByteBuffer serializePublishNormal(boolean dup, int qos, boolean retained, int messageId, int topicId, byte[] payload);
+
+//    @Override
+//    public native ByteBuffer serializePublishPredefined(boolean dup, int qos, boolean retained, int messageId, int topicId, byte[] payload);
+//
+//    @Override
+//    public native ByteBuffer serializePublishShortName(boolean dup, int qos, boolean retained, int messageId, String topic, byte[] payload);
+
+    @Override
     public native ByteBuffer serializeSubscribeNormal(boolean dup, int qos, int messageId, String topic);
 
     @Override
@@ -21,7 +30,7 @@ public class NativeMQTTSNClient implements MQTTSNClient {
     public native ByteBuffer serializeSubscribePredefined(boolean dup, int qos, int messageId, int predefinedTopicId);
 
     @Override
-    public native ByteBuffer serializeRegister(int topicId, int messageId, String topic);
+    public native ByteBuffer serializeRegister(int messageId, String topic);
 
     @Override
     public native ByteBuffer serializeSearchGW(int radius);
@@ -41,4 +50,15 @@ public class NativeMQTTSNClient implements MQTTSNClient {
     @Override
     public native MQTTSNConnAck deserializeConnAck(ByteBuffer buffer);
 
+    @Override
+    public native MQTTSNPubAck deserializePubAck(ByteBuffer buffer);
+
+    @Override
+    public native MQTTSNRegAck deserializeRegAck(ByteBuffer buffer);
+
+    @Override
+    public native MQTTSNSubAck deserializeSubAck(ByteBuffer buffer);
+
+    @Override
+    public native MQTTSNPublish deserializePublish(ByteBuffer buffer);
 }

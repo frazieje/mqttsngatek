@@ -6,10 +6,7 @@ import net.farsystem.mqttsngatek.data.repository.InMemoryMQTTSNClientRepository
 import net.farsystem.mqttsngatek.data.repository.InMemoryMQTTSNTopicRepository
 import net.farsystem.mqttsngatek.gateway.DefaultMQTTSNGateway
 import net.farsystem.mqttsngatek.gateway.MQTTSNGateway
-import net.farsystem.mqttsngatek.mqtt.DefaultMQTTPublishHandler
-import net.farsystem.mqttsngatek.mqtt.MQTTConnack
-import net.farsystem.mqttsngatek.mqtt.MQTTPingResp
-import net.farsystem.mqttsngatek.mqtt.MQTTReturnCode
+import net.farsystem.mqttsngatek.mqtt.*
 import net.farsystem.mqttsngatek.mqttsnclient.NativeMQTTSNClient
 import org.glassfish.grizzly.filterchain.FilterChainBuilder
 import org.glassfish.grizzly.filterchain.TransportFilter
@@ -18,8 +15,7 @@ import org.glassfish.grizzly.nio.transport.UDPNIOConnection
 import org.glassfish.grizzly.nio.transport.UDPNIOTransport
 import org.glassfish.grizzly.nio.transport.UDPNIOTransportBuilder
 import org.junit.jupiter.api.AfterAll
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
@@ -27,6 +23,7 @@ import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
 import java.net.InetSocketAddress
+import java.nio.charset.StandardCharsets
 import java.util.concurrent.TimeUnit
 import java.util.stream.Stream
 
@@ -150,14 +147,6 @@ class GatewayTests {
         assertEquals(snReturnCode.code, connack.returnCode())
     }
 
-    @Test
-    fun `MQTTSN Subscribe with normal topic is processed`() {
-//        val client = NativeMQTTSNClient()
-//        val bytes = client.serializeSubscribeNormal(false, 1, 1234, "someTopic")
-//        val buf = Buffers.wrap(cxn.transport.memoryManager, bytes)
-//        cxn.write(buf)
-//        Thread.sleep(120000)
-    }
 //
 //    @Test
 //    fun `MQTTSN Subscribe with short topic is processed`() {
@@ -207,6 +196,73 @@ class GatewayTests {
 //        cxn.write(buf)
 //        Thread.sleep(60000)
 //    }
+
+    @Test
+    fun `MQTTSN normal publish is processed`() = runTest {
+        val client = NativeMQTTSNClient()
+        var bytes = client.serializeConnect("mqttsnClient", 10, true, false)
+        var buf = Buffers.wrap(cxn.transport.memoryManager, bytes)
+        val expectedConnAck = MQTTConnack(MQTTReturnCode.ACCEPTED, false)
+        fakeMQTTClient.queueResponse(expectedConnAck)
+        cxn.write(buf)
+        var response = captureFilter.getLastRead()
+        val connAck = client.deserializeConnAck(response)
+        assertEquals(MQTTSNReturnCode.ACCEPTED.code, connAck.returnCode)
+        val expectedRegMsgId = 5678
+        bytes = client.serializeRegister(expectedRegMsgId, "someNewTopic")
+        buf = Buffers.wrap(cxn.transport.memoryManager, bytes)
+        cxn.write(buf)
+        response = captureFilter.getLastRead()
+        val regAck = client.deserializeRegAck(response)
+        assertEquals(expectedRegMsgId, regAck.messageId)
+        assertEquals(MQTTSNReturnCode.ACCEPTED.code, regAck.returnCode)
+        assertTrue(regAck.topicId > 0)
+        val payload = "some test string".toByteArray(StandardCharsets.UTF_8)
+        val expectedPubMsgId = 1234
+        val duplicate = false
+        val qos = 1
+        val retained = false
+        bytes = client.serializePublishNormal(duplicate, qos, retained, expectedPubMsgId, regAck.topicId, payload)
+        buf = Buffers.wrap(cxn.transport.memoryManager, bytes)
+        val expectedPubAck = MQTTPubAck(expectedPubMsgId)
+        fakeMQTTClient.queueResponse(expectedPubAck)
+        cxn.write(buf)
+        val mqttPublish = fakeMQTTClient.getLastRequest() as MQTTPublish
+        assertEquals(duplicate, mqttPublish.dup)
+        assertEquals(qos, mqttPublish.qos.code)
+        assertEquals(retained, mqttPublish.retained)
+        assertEquals(expectedPubMsgId, mqttPublish.messageId)
+        assertArrayEquals(payload, mqttPublish.payload)
+        response = captureFilter.getLastRead()
+        val pubAck = client.deserializePubAck(response)
+        assertEquals(expectedPubMsgId, pubAck.messageId)
+        assertEquals(MQTTSNReturnCode.ACCEPTED.code, pubAck.returnCode)
+        assertEquals(regAck.topicId, pubAck.topicId)
+    }
+
+    @Test
+    fun `MQTTSN Subscribe with normal topic is processed`() = runTest {
+        val client = NativeMQTTSNClient()
+        var bytes = client.serializeConnect("mqttsnClient", 10, true, false)
+        var buf = Buffers.wrap(cxn.transport.memoryManager, bytes)
+        fakeMQTTClient.queueResponse(MQTTConnack(MQTTReturnCode.ACCEPTED, false))
+        cxn.write(buf)
+        var response = captureFilter.getLastRead()
+        val connAck = client.deserializeConnAck(response)
+        assertEquals(MQTTSNReturnCode.ACCEPTED.code, connAck.returnCode)
+        val expectedSubMsgId = 5678
+        val expectedSubQos = 1
+        bytes = client.serializeSubscribeNormal(false, expectedSubQos, expectedSubMsgId, "someOtherTopic")
+        buf = Buffers.wrap(cxn.transport.memoryManager, bytes)
+        fakeMQTTClient.queueResponse(MQTTSubAck(MQTTQoS.fromCode(expectedSubQos), expectedSubMsgId))
+        cxn.write(buf)
+        response = captureFilter.getLastRead()
+        val subAck = client.deserializeSubAck(response)
+        assertEquals(expectedSubMsgId, subAck.messageId)
+        assertEquals(MQTTSNReturnCode.ACCEPTED.code, subAck.returnCode)
+        assertTrue(subAck.topicId > 0)
+        assertEquals(expectedSubQos, subAck.qos)
+    }
 
     @Test
     fun `MQTTSN PingReq is processed`() = runTest {

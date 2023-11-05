@@ -9,8 +9,8 @@ data class MQTTSNSearchGw(
 
     init {
         val shortVal = radius.toShort()
-        if ((shortVal.toInt() and 0xFF) != radius) {
-            throw IllegalArgumentException("Radius must fit within a two octets (short)")
+        if ((shortVal.toInt() and 0xFFFF) != radius) {
+            throw IllegalArgumentException("Radius must fit within two octets (short)")
         }
     }
 

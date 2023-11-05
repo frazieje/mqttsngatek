@@ -2,14 +2,14 @@ package net.farsystem.mqttsngatek
 
 import java.nio.ByteBuffer
 
-data class MQTTSNSuback(
+data class MQTTSNSubAck(
     val qos: MQTTSNQoS,
     val messageId: Int,
     val topicId: Int = 0,
     val returnCode: MQTTSNReturnCode
 ): MQTTSNBody {
     companion object {
-        fun fromBuffer(buffer: ByteBuffer): MQTTSNSuback {
+        fun fromBuffer(buffer: ByteBuffer): MQTTSNSubAck {
             val flags = buffer.get().toInt() and 0xFF
             val qos = MQTTSNQoS.fromCode((flags and 0x60) shr 5)
             val topicIdRaw = buffer.short.toInt() and 0xFFFF
@@ -20,7 +20,7 @@ data class MQTTSNSuback(
             } else {
                 0
             }
-            return MQTTSNSuback(qos, messageId, topicId, rc)
+            return MQTTSNSubAck(qos, messageId, topicId, rc)
         }
     }
 

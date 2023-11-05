@@ -17,18 +17,18 @@ data class MQTTSNPublish(
 
     init {
         val shortVal = messageId.toShort()
-        if ((shortVal.toInt() and 0xFF) != messageId) {
-            throw IllegalArgumentException("MessageId must fit within a two octets")
+        if ((shortVal.toInt() and 0xFFFF) != messageId) {
+            throw IllegalArgumentException("MessageId must fit within two octets")
         }
         topicId?.let {
             val topicShort = it.toShort()
-            if ((topicShort.toInt() and 0xFF) != it) {
-                throw IllegalArgumentException("TopicId must fit within a two octets")
+            if ((topicShort.toInt() and 0xFFFF) != it) {
+                throw IllegalArgumentException("TopicId must fit within two octets")
             }
         }
         topic?.let {
             if (it.length > 2) {
-                throw IllegalArgumentException("Short topic must fit within a two octets")
+                throw IllegalArgumentException("Short topic must fit within two octets")
             }
         }
     }

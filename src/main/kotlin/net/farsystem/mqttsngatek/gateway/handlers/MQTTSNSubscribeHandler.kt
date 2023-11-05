@@ -1,6 +1,5 @@
 package net.farsystem.mqttsngatek.gateway.handlers
 
-import kotlinx.coroutines.channels.Channel
 import net.farsystem.mqttsngatek.*
 import net.farsystem.mqttsngatek.data.repository.MQTTClientRepository
 import net.farsystem.mqttsngatek.data.repository.MQTTSNClientRepository
@@ -8,7 +7,6 @@ import net.farsystem.mqttsngatek.data.repository.MQTTSNTopicRepository
 import net.farsystem.mqttsngatek.gateway.MQTTSNMessageHandler
 import net.farsystem.mqttsngatek.model.NetworkContext
 import net.farsystem.mqttsngatek.model.NetworkContext.Companion.flip
-import net.farsystem.mqttsngatek.mqtt.MQTTPublish
 import net.farsystem.mqttsngatek.mqtt.MQTTPublishHandler
 import org.slf4j.LoggerFactory
 
@@ -47,13 +45,18 @@ class MQTTSNSubscribeHandler(
             MQTTSNTopicType.NORMAL -> {
                 val topic = subscribeMsg.topic!!
                 val wildcard = topic.contains(Regex("[+#]"))
-                val mqttSuback = mqttClient.subscribe(topic, subscribeMsg.qos.code, subscribeMsg.messageId) {
+                val mqttSuback = mqttClient.subscribe(
+                    topic,
+                    subscribeMsg.qos.code,
+                    subscribeMsg.dup,
+                    subscribeMsg.messageId
+                ) {
                     publishHandler.receive(mqttClient, it)
                 }
                 val mqttsnTopicId = if (!wildcard)
                     mqttsnTopicRepository.getOrCreateTopic(mqttsnClient, topic).id!!
                 else 0
-                MQTTSNSuback(
+                MQTTSNSubAck(
                     MQTTSNQoS.fromCode(mqttSuback.grantedQos.code),
                     mqttSuback.messageId,
                     mqttsnTopicId,
@@ -62,10 +65,15 @@ class MQTTSNSubscribeHandler(
             }
             MQTTSNTopicType.SHORT_NAME -> {
                 val topic = subscribeMsg.topic!!
-                val mqttSuback = mqttClient.subscribe(topic, subscribeMsg.qos.code, subscribeMsg.messageId) {
+                val mqttSuback = mqttClient.subscribe(
+                    topic,
+                    subscribeMsg.qos.code,
+                    subscribeMsg.dup,
+                    subscribeMsg.messageId
+                ) {
                     publishHandler.receive(mqttClient, it)
                 }
-                MQTTSNSuback(
+                MQTTSNSubAck(
                     MQTTSNQoS.fromCode(mqttSuback.grantedQos.code),
                     mqttSuback.messageId,
                     returnCode = MQTTSNReturnCode.ACCEPTED
@@ -74,16 +82,21 @@ class MQTTSNSubscribeHandler(
             MQTTSNTopicType.PREDEFINED -> {
                 val topicId = subscribeMsg.topicId!!
                 mqttsnTopicRepository.getPredefinedTopic(topicId)?.let { predefinedTopic ->
-                    val mqttSuback = mqttClient.subscribe(predefinedTopic.topic, subscribeMsg.qos.code, subscribeMsg.messageId) {
+                    val mqttSuback = mqttClient.subscribe(
+                        predefinedTopic.topic,
+                        subscribeMsg.qos.code,
+                        subscribeMsg.dup,
+                        subscribeMsg.messageId
+                    ) {
                         publishHandler.receive(mqttClient, it)
                     }
-                    MQTTSNSuback(
+                    MQTTSNSubAck(
                         MQTTSNQoS.fromCode(mqttSuback.grantedQos.code),
                         mqttSuback.messageId,
                         predefinedTopic.id!!,
                         MQTTSNReturnCode.ACCEPTED
                     )
-                } ?: MQTTSNSuback(
+                } ?: MQTTSNSubAck(
                     MQTTSNQoS.ZERO,
                     subscribeMsg.messageId,
                     returnCode = MQTTSNReturnCode.REJECTED_INVALID_TOPIC_ID

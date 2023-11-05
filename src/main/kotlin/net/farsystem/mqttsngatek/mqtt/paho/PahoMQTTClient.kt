@@ -6,7 +6,6 @@ import net.farsystem.mqttsngatek.mqtt.*
 import org.eclipse.paho.client.mqttv3.IMqttActionListener
 import org.eclipse.paho.client.mqttv3.IMqttToken
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions
-import org.eclipse.paho.client.mqttv3.MqttMessage
 import org.eclipse.paho.client.mqttv3.internal.wire.MqttConnack
 import org.eclipse.paho.client.mqttv3.internal.wire.MqttPingResp
 import org.eclipse.paho.client.mqttv3.internal.wire.MqttPubAck
@@ -68,11 +67,12 @@ class PahoMQTTClient(
     override suspend fun subscribe(
         topic: String,
         qos: Int,
+        dup: Boolean,
         messageId: Int,
         subscriber: (MQTTPublish) -> Unit
     ): MQTTSubAck {
         val mqttToken = awaitCallback {
-            client.subscribe(topic, qos, messageId, null, it) { topic, message ->
+            client.subscribe(topic, qos, dup, messageId, null, it) { topic, message ->
                 subscriber(
                     MQTTPublish(
                         topic,
@@ -99,15 +99,14 @@ class PahoMQTTClient(
         topic: String,
         payload: ByteArray,
         qos: Int,
+        dup: Boolean,
         messageId: Int,
         retained: Boolean
     ): MQTTAck? {
         logger.debug("Sending publish to mqtt broker, topic: $topic, qos: $qos, messageId: $messageId")
-        val message = MqttMessage(payload)
-        message.qos = qos
-        message.isRetained = retained
-        message.id = messageId
-        val mqttToken = awaitCallback { client.publish(topic, message, null, it) }!!
+        val mqttToken = awaitCallback {
+            client.publish(topic, payload, qos, dup, messageId, retained, null, it)
+        }!!
         return if (mqttToken.exception == null) {
             logger.debug("Publish Acknowledgement received from mqtt broker for messageId: $messageId")
             when (MQTTQoS.fromCode(qos)) {

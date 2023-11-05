@@ -95,4 +95,4 @@ log/
 mqttsnclient/build/
 mqttsnclient/libs/
 mqttclient/build/
-mqttClient-*/
+*-tcp*/
