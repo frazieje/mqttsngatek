@@ -6,6 +6,18 @@ import org.eclipse.paho.client.mqttv3.internal.wire.MqttPublish
 import org.eclipse.paho.client.mqttv3.internal.wire.MqttSubscribe
 import org.slf4j.LoggerFactory
 
+/**
+ * Make modifications to the default Paho async MQTT client to support the needs of the MQTT-SN Gateway.
+ *
+ * Modifications/Overrides:
+ * 1. Use a No-op ping sender implementation to prevent the MQTT client from automatically sending pings to the broker.
+ *     We want to ensure that any sent pings come from MQTT-SN clients and are forwarded along.
+ * 2. Add a sendPing function to manually send keep-alive pings
+ * 3. Add a custom subscribe function to allow the message/packet ID and duplicate flag to be set by the connected
+ *     MQTT-SN clients and forwarded unchanged to the broker.
+ * 4. Add a custom publish function to allow the message/packet ID and duplicate flag to be set by the connected
+ *     MQTT-SN clients and forwarded unchanged to the broker.
+ */
 class ManualKeepAliveMqttAsyncClient(
     serverURI: String?,
     clientId: String?,

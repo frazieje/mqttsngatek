@@ -11,6 +11,7 @@ import org.eclipse.paho.client.mqttv3.internal.wire.MqttPingResp
 import org.eclipse.paho.client.mqttv3.internal.wire.MqttPubAck
 import org.eclipse.paho.client.mqttv3.internal.wire.MqttPubRec
 import org.eclipse.paho.client.mqttv3.internal.wire.MqttSuback
+import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence
 import org.eclipse.paho.client.mqttv3.persist.MqttDefaultFilePersistence
 import org.slf4j.LoggerFactory
 import kotlin.coroutines.resume
@@ -27,7 +28,7 @@ class PahoMQTTClient(
 
     init {
         val brokerUrl = "tcp://$brokerHost:$brokerPort"
-        client = ManualKeepAliveMqttAsyncClient(brokerUrl, clientId, MqttDefaultFilePersistence())
+        client = ManualKeepAliveMqttAsyncClient(brokerUrl, clientId, MemoryPersistence())
     }
 
     override suspend fun connect(options: MQTTConnectOptions): MQTTConnack {
