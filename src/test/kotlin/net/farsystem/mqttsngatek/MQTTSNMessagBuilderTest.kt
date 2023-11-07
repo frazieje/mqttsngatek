@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import java.nio.ByteBuffer
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class MQTTSNMessagBuilderTests {
+class MQTTSNMessagBuilderTest {
 
     private val builder: MQTTSNMessagBuilder = DefaultMQTTSNMessageBuilder()
     private val client = NativeMQTTSNClient()

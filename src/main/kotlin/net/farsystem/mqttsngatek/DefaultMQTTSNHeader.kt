@@ -2,7 +2,7 @@ package net.farsystem.mqttsngatek
 
 import java.nio.ByteBuffer
 
-class DefaultMQTTSNHeader(override val messageType: MQTTSNMessageType, override val messageLength: Int) : MQTTSNHeader {
+data class DefaultMQTTSNHeader(override val messageType: MQTTSNMessageType, override val messageLength: Int) : MQTTSNHeader {
     override fun writeTo(buffer: ByteBuffer): ByteBuffer {
         return if (messageLength < UByte.MAX_VALUE.toInt()) {
             buffer.put(messageLength.toByte())

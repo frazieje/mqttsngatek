@@ -29,7 +29,7 @@ import java.util.stream.Stream
 
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class GatewayTests {
+class GatewayTest {
 
     lateinit var cxn: UDPNIOConnection
 

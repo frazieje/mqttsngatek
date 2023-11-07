@@ -4,7 +4,7 @@ import net.farsystem.mqttsngatek.data.repository.MQTTClientRepository
 import net.farsystem.mqttsngatek.data.repository.MQTTSNClientRepository
 import net.farsystem.mqttsngatek.data.repository.MQTTSNTopicRepository
 import net.farsystem.mqttsngatek.gateway.*
-import net.farsystem.mqttsngatek.gateway.handlers.*
+import net.farsystem.mqttsngatek.gateway.handler.*
 import net.farsystem.mqttsngatek.mqtt.MQTTPublishHandler
 
 class MQTTSNMessageHandlerRegistry(

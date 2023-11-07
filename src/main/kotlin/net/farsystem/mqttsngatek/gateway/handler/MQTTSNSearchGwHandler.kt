@@ -1,4 +1,4 @@
-package net.farsystem.mqttsngatek.gateway.handlers
+package net.farsystem.mqttsngatek.gateway.handler
 
 import net.farsystem.mqttsngatek.*
 import net.farsystem.mqttsngatek.gateway.MQTTSNMessageHandler
