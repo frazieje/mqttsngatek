@@ -14,6 +14,7 @@ import org.eclipse.paho.client.mqttv3.internal.wire.MqttSuback
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence
 import org.eclipse.paho.client.mqttv3.persist.MqttDefaultFilePersistence
 import org.slf4j.LoggerFactory
+import java.nio.charset.StandardCharsets
 import kotlin.coroutines.resume
 
 class PahoMQTTClient(
@@ -33,13 +34,19 @@ class PahoMQTTClient(
 
     override suspend fun connect(options: MQTTConnectOptions): MQTTConnack {
 
-        val pahoConnectOptions = MqttConnectOptions()
-        pahoConnectOptions.isCleanSession = options.isCleanSession
-        pahoConnectOptions.keepAliveInterval = options.keepAliveInterval
-        pahoConnectOptions.mqttVersion = when (options.version) {
-            MQTTVersion.DEFAULT -> MqttConnectOptions.MQTT_VERSION_DEFAULT
-            MQTTVersion.VERSION_3_1 -> MqttConnectOptions.MQTT_VERSION_3_1
-            MQTTVersion.VERSION_3_1_1 -> MqttConnectOptions.MQTT_VERSION_3_1_1
+        val pahoConnectOptions = with(options) {
+            val connOptions = MqttConnectOptions()
+            connOptions.isCleanSession = isCleanSession
+            connOptions.keepAliveInterval = keepAliveInterval
+            connOptions.mqttVersion = when (version) {
+                MQTTVersion.DEFAULT -> MqttConnectOptions.MQTT_VERSION_DEFAULT
+                MQTTVersion.VERSION_3_1 -> MqttConnectOptions.MQTT_VERSION_3_1
+                MQTTVersion.VERSION_3_1_1 -> MqttConnectOptions.MQTT_VERSION_3_1_1
+            }
+            if (willTopic != null) {
+                connOptions.setWill(willTopic, willPayload, willQos.code, willRetained)
+            }
+            connOptions
         }
 
         val mqttToken = awaitCallback { client.connect(pahoConnectOptions, null, it) }!!
@@ -74,6 +81,7 @@ class PahoMQTTClient(
     ): MQTTSubAck {
         val mqttToken = awaitCallback {
             client.subscribe(topic, qos, dup, messageId, null, it) { topic, message ->
+                logger.debug("received: ${String(message.payload, StandardCharsets.UTF_8)}")
                 subscriber(
                     MQTTPublish(
                         topic,

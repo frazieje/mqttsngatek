@@ -2,6 +2,8 @@ package net.farsystem.mqttsngatek
 
 import org.eclipse.paho.client.mqttv3.*
 import org.eclipse.paho.client.mqttv3.internal.wire.MqttPingReq
+import org.eclipse.paho.client.mqttv3.internal.wire.MqttPubAck
+import org.eclipse.paho.client.mqttv3.internal.wire.MqttPubRec
 import org.eclipse.paho.client.mqttv3.internal.wire.MqttPublish
 import org.eclipse.paho.client.mqttv3.internal.wire.MqttSubscribe
 import org.slf4j.LoggerFactory
@@ -23,6 +25,10 @@ class ManualKeepAliveMqttAsyncClient(
     clientId: String?,
     persistence: MqttClientPersistence?
 ) : MqttAsyncClient(serverURI, clientId, persistence, NoOpPingSender()) {
+
+    init {
+        comms.setManualAcks(true)
+    }
 
     private val logger = LoggerFactory.getLogger(this::class.java)
 
@@ -92,4 +98,16 @@ class ManualKeepAliveMqttAsyncClient(
         comms.sendNoWait(pubMsg, token)
         return token
     }
+
+    fun pubAck(messageId: Int, callback: IMqttActionListener) {
+        val token = MqttToken(clientId)
+        token.actionCallback = callback
+        comms.sendNoWait(MqttPubAck(messageId), token)
+    }
+
+//    fun pubRec(messageId: Int, callback: IMqttActionListener) {
+//        val token = MqttToken(clientId)
+//        token.actionCallback = callback
+//        comms.sendNoWait(MqttPubRec(), token)
+//    }
 }
