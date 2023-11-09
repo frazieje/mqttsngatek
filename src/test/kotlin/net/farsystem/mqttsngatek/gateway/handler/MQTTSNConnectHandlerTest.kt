@@ -71,6 +71,40 @@ class MQTTSNConnectHandlerTest {
         coVerify { outgoingProcessor.process(any(), connackResponse) }
     }
 
+    @Test
+    fun `should return willtopicreq`() = runTest {
+        val expectedClientId = "newClient"
+        val expectedDuration = 60
+        val expectedCleanSession = false
+        val expectedWillFlag = false
+        val netContext = NetworkContext(NetworkProtocol.UDP6, InetSocketAddress(10000), InetSocketAddress(10000))
+        val mockMQTTClient = mockk<MQTTClient>()
+        val expectedClient = MQTTSNClient(expectedClientId, netContext)
+        val connectMsg = mockk<MQTTSNMessage>()
+        val willTopicReqResponse = mockk<MQTTSNMessage>()
+        val expectedConnectOptions = MQTTConnectOptions(expectedCleanSession, expectedDuration, MQTTVersion.VERSION_3_1_1)
+        val expectedResponseBody = MQTTSNWillTopicReq()
+        every { connectMsg.body } returns MQTTSNConnect(expectedCleanSession, expectedWillFlag, duration = expectedDuration, clientId = expectedClientId)
+        every { willTopicReqResponse.body } returns expectedResponseBody
+        coEvery { mqttsnClientRepository.getClient(any<NetworkContext>()) } returns null
+        coEvery { mqttsnClientRepository.addOrUpdateClient(any()) } just runs
+        coEvery { mqttClientRepository.getOrCreate(expectedClient) } returns mockMQTTClient
+        every { mockMQTTClient.isConnected() } returns false
+        coEvery { mockMQTTClient.connect(any()) } returns MQTTConnack(brokerReturnCode, false)
+        every { messageBuilder.createMessage(MQTTSNMessageType.CONNACK, expectedResponseBody) } returns connackResponse
+        coEvery { outgoingProcessor.process(any(), any()) } just runs
+        handler.handleMessage(netContext, connectMsg)
+        coVerify {
+            mqttsnClientRepository.getClient(netContext)
+            mqttsnClientRepository.addOrUpdateClient(expectedClient)
+            mqttClientRepository.getOrCreate(expectedClient)
+            mockMQTTClient.isConnected()
+            mockMQTTClient.connect(expectedConnectOptions)
+        }
+        verify {messageBuilder.createMessage(MQTTSNMessageType.CONNACK, expectedResponseBody) }
+        coVerify { outgoingProcessor.process(any(), connackResponse) }
+    }
+
     companion object {
         @JvmStatic
         private fun provideConnectReturnCodeMapping() =
