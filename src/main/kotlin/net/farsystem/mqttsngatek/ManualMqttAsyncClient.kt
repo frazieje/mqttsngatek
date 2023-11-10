@@ -1,11 +1,10 @@
 package net.farsystem.mqttsngatek
 
+import net.farsystem.mqttsngatek.mqtt.paho.SimpleMqttPubComp
+import net.farsystem.mqttsngatek.mqtt.paho.SimpleMqttPubRec
+import net.farsystem.mqttsngatek.mqtt.paho.SimpleMqttPubRel
 import org.eclipse.paho.client.mqttv3.*
-import org.eclipse.paho.client.mqttv3.internal.wire.MqttPingReq
-import org.eclipse.paho.client.mqttv3.internal.wire.MqttPubAck
-import org.eclipse.paho.client.mqttv3.internal.wire.MqttPubRec
-import org.eclipse.paho.client.mqttv3.internal.wire.MqttPublish
-import org.eclipse.paho.client.mqttv3.internal.wire.MqttSubscribe
+import org.eclipse.paho.client.mqttv3.internal.wire.*
 import org.slf4j.LoggerFactory
 
 /**
@@ -19,8 +18,10 @@ import org.slf4j.LoggerFactory
  *     MQTT-SN clients and forwarded unchanged to the broker.
  * 4. Add a custom publish function to allow the message/packet ID and duplicate flag to be set by the connected
  *     MQTT-SN clients and forwarded unchanged to the broker.
+ * 5. Use manual ACK messages so that they can be forwarded from MQTT-SN clients. By default the Paho MQTT client
+ *     automatically sends acknowledgements.
  */
-class ManualKeepAliveMqttAsyncClient(
+class ManualMqttAsyncClient(
     serverURI: String?,
     clientId: String?,
     persistence: MqttClientPersistence?
@@ -105,9 +106,21 @@ class ManualKeepAliveMqttAsyncClient(
         comms.sendNoWait(MqttPubAck(messageId), token)
     }
 
-//    fun pubRec(messageId: Int, callback: IMqttActionListener) {
-//        val token = MqttToken(clientId)
-//        token.actionCallback = callback
-//        comms.sendNoWait(MqttPubRec(), token)
-//    }
+    fun pubRec(messageId: Int, callback: IMqttActionListener) {
+        val token = MqttToken(clientId)
+        token.actionCallback = callback
+        comms.sendNoWait(SimpleMqttPubRec(messageId), token)
+    }
+
+    fun pubRel(messageId: Int, callback: IMqttActionListener) {
+        val token = MqttToken(clientId)
+        token.actionCallback = callback
+        comms.sendNoWait(SimpleMqttPubRel(messageId), token)
+    }
+
+    fun pubComp(messageId: Int, callback: IMqttActionListener) {
+        val token = MqttToken(clientId)
+        token.actionCallback = callback
+        comms.sendNoWait(SimpleMqttPubComp(messageId), token)
+    }
 }

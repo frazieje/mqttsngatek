@@ -19,11 +19,10 @@ interface MQTTClient {
         messageId: Int,
         retained: Boolean
     ): MQTTAck?
-
-    suspend fun pubAck(
-        messageId: Int
-    )
-
+    suspend fun pubAck(messageId: Int)
+    suspend fun pubRel(messageId: Int)
+    suspend fun pubRec(messageId: Int)
+    suspend fun pubComp(messageId: Int)
     suspend fun disconnect()
     fun isConnected(): Boolean
 }

@@ -34,9 +34,9 @@ class MQTTSNConnectHandler(
         val client = mqttClientRepository.getOrCreate(snClient)
 
         if (client.isConnected()) {
-            logger.error("client already connected, disconnecting")
+            logger.warn("client already connected, disconnecting")
             client.disconnect()
-            logger.error("client disconnected")
+            logger.debug("client disconnected")
         }
 
         val options = MQTTConnectOptions(
@@ -48,9 +48,9 @@ class MQTTSNConnectHandler(
         //TODO: Handle cleanSession
 
         val response = if (!body.willFlag) {
-            logger.error("will flag not set, connecting to broker")
+            logger.debug("will flag not set, connecting to broker")
             val mqttConnack = client.connect(options)
-            logger.error("connection to broker done")
+            logger.debug("connection to broker done")
 
             val rc = when(mqttConnack.returnCode) {
                 MQTTReturnCode.ACCEPTED -> MQTTSNReturnCode.ACCEPTED
@@ -66,7 +66,7 @@ class MQTTSNConnectHandler(
                 MQTTSNConnack(rc)
             )
         } else {
-            logger.error("will flag set, requesting will topic")
+            logger.debug("will flag set, requesting will topic")
             mqttsnMessagBuilder.createMessage(
                 MQTTSNMessageType.WILLTOPICREQ,
                 MQTTSNWillTopicReq()

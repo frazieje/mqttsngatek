@@ -1,7 +1,7 @@
 package net.farsystem.mqttsngatek.mqtt.paho
 
 import kotlinx.coroutines.suspendCancellableCoroutine
-import net.farsystem.mqttsngatek.ManualKeepAliveMqttAsyncClient
+import net.farsystem.mqttsngatek.ManualMqttAsyncClient
 import net.farsystem.mqttsngatek.mqtt.*
 import org.eclipse.paho.client.mqttv3.IMqttActionListener
 import org.eclipse.paho.client.mqttv3.IMqttToken
@@ -12,7 +12,6 @@ import org.eclipse.paho.client.mqttv3.internal.wire.MqttPubAck
 import org.eclipse.paho.client.mqttv3.internal.wire.MqttPubRec
 import org.eclipse.paho.client.mqttv3.internal.wire.MqttSuback
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence
-import org.eclipse.paho.client.mqttv3.persist.MqttDefaultFilePersistence
 import org.slf4j.LoggerFactory
 import java.nio.charset.StandardCharsets
 import kotlin.coroutines.resume
@@ -25,11 +24,11 @@ class PahoMQTTClient(
 
     private val logger = LoggerFactory.getLogger(this::class.java)
 
-    private val client: ManualKeepAliveMqttAsyncClient
+    private val client: ManualMqttAsyncClient
 
     init {
         val brokerUrl = "tcp://$brokerHost:$brokerPort"
-        client = ManualKeepAliveMqttAsyncClient(brokerUrl, clientId, MemoryPersistence())
+        client = ManualMqttAsyncClient(brokerUrl, clientId, MemoryPersistence())
     }
 
     override suspend fun connect(options: MQTTConnectOptions): MQTTConnack {
@@ -132,6 +131,22 @@ class PahoMQTTClient(
         } else {
             throw mqttToken.exception
         }
+    }
+
+    override suspend fun pubAck(messageId: Int) {
+        awaitCallback { client.pubAck(messageId, it) }
+    }
+
+    override suspend fun pubRel(messageId: Int) {
+        awaitCallback { client.pubRel(messageId, it) }
+    }
+
+    override suspend fun pubRec(messageId: Int) {
+        awaitCallback { client.pubRec(messageId, it) }
+    }
+
+    override suspend fun pubComp(messageId: Int) {
+        awaitCallback { client.pubComp(messageId, it) }
     }
 
     override suspend fun disconnect() {
