@@ -33,10 +33,10 @@ class MQTTSNPublishHandler(
         }
 
         val mqttClient = mqttsnClient.let {
-            mqttClientRepository.getOrCreate(it)
+            mqttClientRepository.get(it)
         }
 
-        if (!mqttClient.isConnected()) {
+        if (mqttClient?.isConnected() != true) {
             logger.debug("MQTT client is not connected - aborting")
             return
         }

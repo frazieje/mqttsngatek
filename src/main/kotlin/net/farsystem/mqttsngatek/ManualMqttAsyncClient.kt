@@ -73,6 +73,30 @@ class ManualMqttAsyncClient(
         }
     }
 
+    fun unsubscribe(
+        topic: String,
+        messageId: Int,
+        userContext: Any?,
+        callback: IMqttActionListener
+    ): IMqttToken {
+        MqttTopic.validate(topic, true)
+
+        logger.debug("$clientId unsubscribe from topic=$topic")
+
+        val topics = arrayOf(topic)
+
+        val token = MqttToken(clientId)
+        token.actionCallback = callback
+        token.userContext = userContext
+        token.internalTok.topics = topics
+
+        val unsubscribe = MqttUnsubscribe(topics)
+        unsubscribe.messageId = messageId
+        comms.sendNoWait(unsubscribe, token)
+
+        return token
+    }
+
     fun publish(
         topic: String,
         payload: ByteArray,

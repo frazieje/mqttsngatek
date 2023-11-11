@@ -22,7 +22,7 @@ class MQTTSNPingReqHandler(
         logger.debug("PINGREQ Received with clientId ${pingreq.clientId}")
 
         val mqttClient = mqttsnClientRepository.getClient(networkContext)?.let {
-            mqttClientRepository.getOrCreate(it)
+            mqttClientRepository.get(it)
         }
 
         if (mqttClient == null || !mqttClient.isConnected()) {

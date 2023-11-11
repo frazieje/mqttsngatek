@@ -103,6 +103,16 @@ class PahoMQTTClient(
         }
     }
 
+    override suspend fun unsubscribe(topic: String, messageId: Int): MQTTUnsubAck {
+        val mqttToken = awaitCallback { client.unsubscribe(topic, messageId, null, it) }!!
+        return if (mqttToken.exception == null) {
+            logger.debug("Unsubscribe Acknowledgement received from mqtt broker for messageId: $messageId")
+            MQTTUnsubAck(mqttToken.response.messageId)
+        } else {
+            throw mqttToken.exception
+        }
+    }
+
     override suspend fun publish(
         topic: String,
         payload: ByteArray,
@@ -137,12 +147,22 @@ class PahoMQTTClient(
         awaitCallback { client.pubAck(messageId, it) }
     }
 
-    override suspend fun pubRel(messageId: Int) {
-        awaitCallback { client.pubRel(messageId, it) }
+    override suspend fun pubRel(messageId: Int): MQTTPubComp {
+        val mqttToken = awaitCallback { client.pubRel(messageId, it) }!!
+        return if (mqttToken.exception == null) {
+            MQTTPubComp(mqttToken.response.messageId)
+        } else {
+            throw mqttToken.exception
+        }
     }
 
-    override suspend fun pubRec(messageId: Int) {
-        awaitCallback { client.pubRec(messageId, it) }
+    override suspend fun pubRec(messageId: Int): MQTTPubRel {
+        val mqttToken = awaitCallback { client.pubRec(messageId, it) }!!
+        return if (mqttToken.exception == null) {
+            MQTTPubRel(mqttToken.response.messageId)
+        } else {
+            throw mqttToken.exception
+        }
     }
 
     override suspend fun pubComp(messageId: Int) {

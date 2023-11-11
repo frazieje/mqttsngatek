@@ -15,6 +15,7 @@ class InMemoryMQTTClientRepository(
     private val mutex = Mutex()
 
     private val mqttClients = mutableMapOf<MQTTSNClient, MQTTClient>()
+    override suspend fun get(snClient: MQTTSNClient): MQTTClient? = mqttClients[snClient]
 
     override suspend fun getOrCreate(snClient: MQTTSNClient): MQTTClient = mutex.withLock {
         mqttClients[snClient] ?: mqttClientFactory.getClient(

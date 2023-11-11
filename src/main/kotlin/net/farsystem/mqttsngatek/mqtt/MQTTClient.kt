@@ -11,6 +11,10 @@ interface MQTTClient {
         messageId: Int,
         subscriber: (MQTTPublish) -> Unit
     ): MQTTSubAck
+    suspend fun unsubscribe(
+        topic: String,
+        messageId: Int
+    ): MQTTUnsubAck
     suspend fun publish(
         topic: String,
         payload: ByteArray,
@@ -20,8 +24,8 @@ interface MQTTClient {
         retained: Boolean
     ): MQTTAck?
     suspend fun pubAck(messageId: Int)
-    suspend fun pubRel(messageId: Int)
-    suspend fun pubRec(messageId: Int)
+    suspend fun pubRel(messageId: Int): MQTTPubComp
+    suspend fun pubRec(messageId: Int): MQTTPubRel
     suspend fun pubComp(messageId: Int)
     suspend fun disconnect()
     fun isConnected(): Boolean
