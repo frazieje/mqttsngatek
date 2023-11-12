@@ -50,6 +50,26 @@ class MQTTSNMessageHandlerRegistry(
             mqttsnTopicRepository,
             mqttClientRepository,
             outgoingProcessor
+        ),
+        MQTTSNMessageType.PUBACK to MQTTSNPubAckHandler(
+            mqttsnClientRepository, mqttClientRepository
+        ),
+        MQTTSNMessageType.UNSUBSCRIBE to MQTTSNUnsubscribeHandler(
+            messageBuilder,
+            mqttsnClientRepository,
+            mqttClientRepository,
+            mqttsnTopicRepository,
+            outgoingProcessor
+        ),
+        MQTTSNMessageType.PUBREL to MQTTSNPubRelHandler(
+            messageBuilder,
+            mqttsnClientRepository,
+            mqttClientRepository,
+            outgoingProcessor
+        ),
+        MQTTSNMessageType.PINGRESP to MQTTSNPingRespHandler(
+            mqttsnClientRepository,
+            mqttClientRepository
         )
     )
     fun register(messageType: MQTTSNMessageType, handler: MQTTSNMessageHandler) = handlers.set(messageType, handler)

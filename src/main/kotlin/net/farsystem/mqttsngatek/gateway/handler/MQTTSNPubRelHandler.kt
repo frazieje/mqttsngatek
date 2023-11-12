@@ -1,30 +1,26 @@
 package net.farsystem.mqttsngatek.gateway.handler
 
-
 import net.farsystem.mqttsngatek.*
 import net.farsystem.mqttsngatek.data.repository.MQTTClientRepository
 import net.farsystem.mqttsngatek.data.repository.MQTTSNClientRepository
-import net.farsystem.mqttsngatek.data.repository.MQTTSNTopicRepository
 import net.farsystem.mqttsngatek.gateway.MQTTSNMessageHandler
 import net.farsystem.mqttsngatek.model.NetworkContext
 import net.farsystem.mqttsngatek.model.NetworkContext.Companion.flip
 import org.slf4j.LoggerFactory
 
-class MQTTSNUnsubscribeHandler(
-    private val mqttsnMessagBuilder: MQTTSNMessagBuilder,
+class MQTTSNPubRelHandler(
+    private val mqttsnMessageBuilder: MQTTSNMessagBuilder,
     private val mqttsnClientRepository: MQTTSNClientRepository,
     private val mqttClientRepository: MQTTClientRepository,
-    private val mqttsnTopicRepository: MQTTSNTopicRepository,
-    private val outgoingProcessor: MQTTSNMessageProcessor,
+    private val outgoingProcessor: MQTTSNMessageProcessor
 ) : MQTTSNMessageHandler {
 
     private val logger = LoggerFactory.getLogger(this::class.java)
 
     override suspend fun handleMessage(networkContext: NetworkContext, message: MQTTSNMessage) {
+        val pubackMsg = message.body as MQTTSNPubAck
 
-        val body = message.body as MQTTSNUnsubscribe
-
-        logger.debug("UNSUBSCRIBE Received with messageId ${body.messageId}")
+        logger.debug("PUBREL received with messageId ${pubackMsg.messageId}")
 
         val mqttsnClient = mqttsnClientRepository.getClient(networkContext)
 
@@ -42,23 +38,15 @@ class MQTTSNUnsubscribeHandler(
             return
         }
 
-        val response = when (body.topicType) {
-            MQTTSNTopicType.NORMAL,
-            MQTTSNTopicType.SHORT_NAME -> body.topic!!
-            MQTTSNTopicType.PREDEFINED -> mqttsnTopicRepository.getPredefinedTopic(body.topicId!!)!!.topic
-        }.let {
-            val unsuback = mqttClient.unsubscribe(it, body.messageId)
-            val wildcard = it.contains(Regex("[+#]"))
-            if (!wildcard) {
-                val snTopic = mqttsnTopicRepository.getTopic(mqttsnClient, it)!!
-                mqttsnTopicRepository.removeTopic(mqttsnClient, snTopic)
-            }
-            mqttsnMessagBuilder.createMessage(
-                MQTTSNMessageType.UNSUBACK,
-                MQTTSNUnsubAck(unsuback.messageId)
-            )
-        }
+        val pubComp = mqttClient.pubRel(pubackMsg.messageId)
 
+        val response = mqttsnMessageBuilder.createMessage(
+            MQTTSNMessageType.PUBCOMP,
+            MQTTSNPubComp(pubComp.messageId)
+        )
+
+        logger.debug("MQTT pubComp received, sending to $mqttsnClient")
         outgoingProcessor.process(networkContext.flip(), response)
     }
+
 }
