@@ -8,7 +8,7 @@ import net.farsystem.mqttsngatek.model.NetworkContext
 import net.farsystem.mqttsngatek.model.NetworkContext.Companion.flip
 import org.slf4j.LoggerFactory
 
-class MQTTSNPubRelHandler(
+class MQTTSNPubRecHandler(
     private val mqttsnMessageBuilder: MQTTSNMessagBuilder,
     private val mqttsnClientRepository: MQTTSNClientRepository,
     private val mqttClientRepository: MQTTClientRepository,
@@ -18,9 +18,9 @@ class MQTTSNPubRelHandler(
     private val logger = LoggerFactory.getLogger(this::class.java)
 
     override suspend fun handleMessage(networkContext: NetworkContext, message: MQTTSNMessage) {
-        val pubRelMsg = message.body as MQTTSNPubRel
+        val pubRecMsg = message.body as MQTTSNPubRec
 
-        logger.debug("PUBREL received with messageId ${pubRelMsg.messageId}")
+        logger.debug("PUBREC received with messageId ${pubRecMsg.messageId}")
 
         val mqttsnClient = mqttsnClientRepository.getClient(networkContext)
 
@@ -38,15 +38,14 @@ class MQTTSNPubRelHandler(
             return
         }
 
-        val pubComp = mqttClient.pubRel(pubRelMsg.messageId)
+        val pubRel = mqttClient.pubRec(pubRecMsg.messageId)
 
         val response = mqttsnMessageBuilder.createMessage(
-            MQTTSNMessageType.PUBCOMP,
-            MQTTSNPubComp(pubComp.messageId)
+            MQTTSNMessageType.PUBREL,
+            MQTTSNPubComp(pubRel.messageId)
         )
 
-        logger.debug("MQTT pubComp received, sending to $mqttsnClient")
+        logger.debug("MQTT pubRel received, sending to $mqttsnClient")
         outgoingProcessor.process(networkContext.flip(), response)
     }
-
 }

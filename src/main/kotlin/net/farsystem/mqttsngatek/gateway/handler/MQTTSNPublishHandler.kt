@@ -116,8 +116,6 @@ class MQTTSNPublishHandler(
                 )
             }
             is MQTTPubRec -> mqttsnMessageBuilder.createMessage(MQTTSNMessageType.PUBREC, MQTTSNPubRec(messageId))
-            is MQTTPubRel -> mqttsnMessageBuilder.createMessage(MQTTSNMessageType.PUBREL, MQTTSNPubRel(messageId))
-            is MQTTPubComp -> mqttsnMessageBuilder.createMessage(MQTTSNMessageType.PUBCOMP, MQTTSNPubComp(messageId))
             else -> null
         }
 }

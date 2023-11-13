@@ -67,6 +67,15 @@ class MQTTSNMessageHandlerRegistry(
             mqttClientRepository,
             outgoingProcessor
         ),
+        MQTTSNMessageType.PUBREC to MQTTSNPubRecHandler(
+            messageBuilder,
+            mqttsnClientRepository,
+            mqttClientRepository,
+            outgoingProcessor
+        ),
+        MQTTSNMessageType.PUBCOMP to MQTTSNPubAckHandler(
+            mqttsnClientRepository, mqttClientRepository
+        ),
         MQTTSNMessageType.PINGRESP to MQTTSNPingRespHandler(
             mqttsnClientRepository,
             mqttClientRepository

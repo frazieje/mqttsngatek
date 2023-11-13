@@ -144,7 +144,10 @@ class PahoMQTTClient(
     }
 
     override suspend fun pubAck(messageId: Int) {
-        awaitCallback { client.pubAck(messageId, it) }
+        val token = awaitCallback { client.pubAck(messageId, it) }!!
+        if (token.exception != null) {
+            throw token.exception
+        }
     }
 
     override suspend fun pubRel(messageId: Int): MQTTPubComp {
@@ -166,11 +169,17 @@ class PahoMQTTClient(
     }
 
     override suspend fun pubComp(messageId: Int) {
-        awaitCallback { client.pubComp(messageId, it) }
+        val token = awaitCallback { client.pubComp(messageId, it) }!!
+        if (token.exception != null) {
+            throw token.exception
+        }
     }
 
     override suspend fun disconnect() {
-        awaitCallback { client.disconnect(null, it) }
+        val token = awaitCallback { client.disconnect(null, it) }!!
+        if (token.exception != null) {
+            throw token.exception
+        }
     }
 
     override fun isConnected(): Boolean = client.isConnected
