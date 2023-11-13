@@ -7,12 +7,12 @@ import net.farsystem.mqttsngatek.model.MQTTSNClient
 
 class InMemoryMQTTSNPublishRepository : MQTTSNPublishRepository {
 
-    private val mutex = Mutex()
+    private val pubMutex = Mutex()
 
     private val publishesByClient = mutableMapOf<MQTTSNClient, MutableMap<Int, MQTTSNPublish>>()
 
-    override suspend fun put(mqttsnClient: MQTTSNClient, registrationMessageId: Int, mqttsnPublish: MQTTSNPublish) {
-        mutex.withLock {
+    override suspend fun putPendingPublish(mqttsnClient: MQTTSNClient, registrationMessageId: Int, mqttsnPublish: MQTTSNPublish) {
+        pubMutex.withLock {
             publishesByClient[mqttsnClient]?.get(registrationMessageId) ?: run {
                 publishesByClient[mqttsnClient]?.let {
                     it[registrationMessageId] = mqttsnPublish
@@ -23,7 +23,7 @@ class InMemoryMQTTSNPublishRepository : MQTTSNPublishRepository {
         }
     }
 
-    override suspend fun get(mqttsnClient: MQTTSNClient, registrationMessageId: Int) = mutex.withLock {
+    override suspend fun getPendingPublish(mqttsnClient: MQTTSNClient, registrationMessageId: Int) = pubMutex.withLock {
         publishesByClient[mqttsnClient]?.get(registrationMessageId)
     }
 }

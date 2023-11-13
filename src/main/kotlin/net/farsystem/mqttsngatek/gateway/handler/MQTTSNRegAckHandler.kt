@@ -31,7 +31,7 @@ class MQTTSNRegAckHandler(
 
         when (regAckMsg.returnCode) {
             MQTTSNReturnCode.ACCEPTED -> {
-                mqttsnPublishRepository.get(mqttsnClient, regAckMsg.messageId)?.let {
+                mqttsnPublishRepository.getPendingPublish(mqttsnClient, regAckMsg.messageId)?.let {
                     val response = mqttsnMessagBuilder.createMessage(
                         MQTTSNMessageType.PUBLISH,
                         it

@@ -47,7 +47,7 @@ class DefaultMQTTPublishHandler(
                         getNextRegistrationId().toInt(),
                         topic.topic
                     )
-                    mqttsnPublishRepository.put(this, registerBody.messageId, message.toSnPublish(topic))
+                    mqttsnPublishRepository.putPendingPublish(this, registerBody.messageId, message.toSnPublish(topic))
                     mqttsnMessageBuilder.createMessage(MQTTSNMessageType.REGISTER, registerBody)
                 }
                 outgoingProcessor.process(networkContext.flip(), response)

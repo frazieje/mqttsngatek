@@ -48,15 +48,22 @@ class DefaultMQTTSNMessageBuilder: MQTTSNMessagBuilder {
     companion object {
         private const val MQTTSN_MIN_HEADER_SIZE = 2
         val classMap: Map<MQTTSNMessageType, (ByteBuffer) -> MQTTSNBody> = hashMapOf(
-            MQTTSNMessageType.SEARCHGW to (MQTTSNSearchGw)::fromBuffer,
-            MQTTSNMessageType.CONNECT to (MQTTSNConnect)::fromBuffer,
-            MQTTSNMessageType.SUBSCRIBE to (MQTTSNSubscribe)::fromBuffer,
-            MQTTSNMessageType.REGISTER to (MQTTSNRegister)::fromBuffer,
-            MQTTSNMessageType.REGACK to (MQTTSNRegAck)::fromBuffer,
-            MQTTSNMessageType.GWINFO to (MQTTSNGwInfo)::fromBuffer,
-            MQTTSNMessageType.PINGREQ to (MQTTSNPingReq)::fromBuffer,
-            MQTTSNMessageType.PINGRESP to (MQTTSNPingResp)::fromBuffer,
-            MQTTSNMessageType.PUBLISH to (MQTTSNPublish)::fromBuffer
+            MQTTSNMessageType.SEARCHGW to MQTTSNSearchGw::fromBuffer,
+            MQTTSNMessageType.CONNECT to MQTTSNConnect::fromBuffer,
+            MQTTSNMessageType.SUBSCRIBE to MQTTSNSubscribe::fromBuffer,
+            MQTTSNMessageType.REGISTER to MQTTSNRegister::fromBuffer,
+            MQTTSNMessageType.REGACK to MQTTSNRegAck::fromBuffer,
+            MQTTSNMessageType.GWINFO to MQTTSNGwInfo::fromBuffer,
+            MQTTSNMessageType.PINGREQ to MQTTSNPingReq::fromBuffer,
+            MQTTSNMessageType.PINGRESP to MQTTSNPingResp::fromBuffer,
+            MQTTSNMessageType.PUBLISH to MQTTSNPublish::fromBuffer,
+            MQTTSNMessageType.PUBACK to MQTTSNPubAck::fromBuffer,
+            MQTTSNMessageType.PUBCOMP to MQTTSNPubComp::fromBuffer,
+            MQTTSNMessageType.PUBREC to MQTTSNPubRec::fromBuffer,
+            MQTTSNMessageType.PUBREL to MQTTSNPubRel::fromBuffer,
+            MQTTSNMessageType.UNSUBSCRIBE to MQTTSNUnsubscribe::fromBuffer,
+            MQTTSNMessageType.WILLTOPIC to MQTTSNWillTopic::fromBuffer,
+            MQTTSNMessageType.WILLMSG to MQTTSNWillMsg::fromBuffer
         )
     }
 }
