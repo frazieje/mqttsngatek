@@ -29,11 +29,19 @@ class MQTTSNWillTopicHandler(
             return
         }
 
-        mqttsnWillRepository.putPendingWillTopic(mqttsnClient, willTopicMsg)
+        logger.debug("WILLTOPIC for $mqttsnClient")
 
-        outgoingProcessor.process(
-            networkContext.flip(),
-            messageBuilder.createMessage(MQTTSNMessageType.WILLMSGREQ, MQTTSNWillMsgReq())
-        )
+        if (willTopicMsg.qos != null) {
+            logger.debug("Storing will topic for $mqttsnClient, responding with WILLMSGREQUEST")
+            mqttsnWillRepository.putPendingWillTopic(mqttsnClient, willTopicMsg)
+
+            outgoingProcessor.process(
+                networkContext.flip(),
+                messageBuilder.createMessage(MQTTSNMessageType.WILLMSGREQ, MQTTSNWillMsgReq())
+            )
+        } else {
+            logger.debug("Empty will topic for $mqttsnClient, clearing any stored will topic/message")
+            // TODO: reconnect MQTT client (if available) and clear will info
+        }
     }
 }

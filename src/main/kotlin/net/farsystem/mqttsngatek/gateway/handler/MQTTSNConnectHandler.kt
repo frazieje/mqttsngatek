@@ -3,6 +3,7 @@ package net.farsystem.mqttsngatek.gateway.handler
 import net.farsystem.mqttsngatek.*
 import net.farsystem.mqttsngatek.data.repository.MQTTClientRepository
 import net.farsystem.mqttsngatek.data.repository.MQTTSNClientRepository
+import net.farsystem.mqttsngatek.data.repository.MQTTSNWillRepository
 import net.farsystem.mqttsngatek.gateway.MQTTSNMessageHandler
 import net.farsystem.mqttsngatek.model.MQTTSNClient
 import net.farsystem.mqttsngatek.model.NetworkContext
@@ -11,9 +12,10 @@ import net.farsystem.mqttsngatek.mqtt.*
 import org.slf4j.LoggerFactory
 
 class MQTTSNConnectHandler(
-    private val mqttsnMessagBuilder: MQTTSNMessagBuilder,
+    private val mqttsnMessageBuilder: MQTTSNMessagBuilder,
     private val mqttsnClientRepository: MQTTSNClientRepository,
     private val mqttClientRepository: MQTTClientRepository,
+    private val mqttsnWillRepository: MQTTSNWillRepository,
     private val outgoingProcessor: MQTTSNMessageProcessor,
 ) : MQTTSNMessageHandler {
 
@@ -61,13 +63,14 @@ class MQTTSNConnectHandler(
                 MQTTReturnCode.REJECTED_UNACCEPTABLE_PROTOCOL -> MQTTSNReturnCode.REJECTED_NOT_SUPPORTED
             }
 
-            mqttsnMessagBuilder.createMessage(
+            mqttsnMessageBuilder.createMessage(
                 MQTTSNMessageType.CONNACK,
                 MQTTSNConnack(rc)
             )
         } else {
             logger.debug("will flag set, requesting will topic")
-            mqttsnMessagBuilder.createMessage(
+            mqttsnWillRepository.putPendingConnect(snClient, body)
+            mqttsnMessageBuilder.createMessage(
                 MQTTSNMessageType.WILLTOPICREQ,
                 MQTTSNWillTopicReq()
             )
