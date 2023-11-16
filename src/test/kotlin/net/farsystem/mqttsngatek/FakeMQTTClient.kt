@@ -39,6 +39,10 @@ class FakeMQTTClient(override val clientId: String) : MQTTClient {
         return responseQueue.removeFirst() as MQTTSubAck
     }
 
+    override suspend fun unsubscribe(topic: String, messageId: Int): MQTTUnsubAck {
+        return responseQueue.removeFirst() as MQTTUnsubAck
+    }
+
     override suspend fun publish(
         topic: String,
         payload: ByteArray,
@@ -57,6 +61,18 @@ class FakeMQTTClient(override val clientId: String) : MQTTClient {
         ))
         return responseQueue.removeFirst() as? MQTTAck
     }
+
+    override suspend fun pubAck(messageId: Int) {}
+
+    override suspend fun pubRel(messageId: Int): MQTTPubComp {
+        return responseQueue.removeFirst() as MQTTPubComp
+    }
+
+    override suspend fun pubRec(messageId: Int): MQTTPubRel {
+        return responseQueue.removeFirst() as MQTTPubRel
+    }
+
+    override suspend fun pubComp(messageId: Int) {}
 
     override suspend fun disconnect() {
         isConnected = false

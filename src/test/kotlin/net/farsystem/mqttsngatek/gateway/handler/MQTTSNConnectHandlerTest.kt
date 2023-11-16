@@ -5,6 +5,7 @@ import kotlinx.coroutines.test.runTest
 import net.farsystem.mqttsngatek.*
 import net.farsystem.mqttsngatek.data.repository.MQTTClientRepository
 import net.farsystem.mqttsngatek.data.repository.MQTTSNClientRepository
+import net.farsystem.mqttsngatek.data.repository.MQTTSNWillRepository
 import net.farsystem.mqttsngatek.gateway.MQTTSNMessageHandler
 import net.farsystem.mqttsngatek.model.MQTTSNClient
 import net.farsystem.mqttsngatek.model.NetworkContext
@@ -26,10 +27,12 @@ class MQTTSNConnectHandlerTest {
     private val mqttsnClientRepository: MQTTSNClientRepository = mockk()
     private val mqttClientRepository: MQTTClientRepository = mockk()
     private val outgoingProcessor: MQTTSNMessageProcessor = mockk()
+    private val mqttsnWillRepository: MQTTSNWillRepository = mockk()
     private val handler: MQTTSNMessageHandler = MQTTSNConnectHandler(
         messageBuilder,
         mqttsnClientRepository,
         mqttClientRepository,
+        mqttsnWillRepository,
         outgoingProcessor
     )
 

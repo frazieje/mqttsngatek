@@ -10,7 +10,6 @@ import net.farsystem.mqttsngatek.model.MQTTSNClient
 class InMemoryMQTTSNWillRepository : MQTTSNWillRepository {
 
     private val willMutex = Mutex()
-    private val willsByClient = mutableMapOf<MQTTSNClient, MQTTSNPublish>()
     private val pendingWillTopics = mutableMapOf<MQTTSNClient, MQTTSNWillTopic>()
     private val pendingConnects = mutableMapOf<MQTTSNClient, MQTTSNConnect>()
     override suspend fun putPendingConnect(mqttsnClient: MQTTSNClient, connect: MQTTSNConnect) = willMutex.withLock {
@@ -21,15 +20,4 @@ class InMemoryMQTTSNWillRepository : MQTTSNWillRepository {
         pendingWillTopics[mqttsnClient] = topic
     }
     override suspend fun getPendingWillTopic(mqttsnClient: MQTTSNClient): MQTTSNWillTopic? = pendingWillTopics[mqttsnClient]
-    override suspend fun getWill(mqttsnClient: MQTTSNClient): MQTTSNPublish? = willsByClient[mqttsnClient]
-    override suspend fun putWill(mqttsnClient: MQTTSNClient, will: MQTTSNPublish) = willMutex.withLock {
-        pendingWillTopics.remove(mqttsnClient)
-        willsByClient[mqttsnClient] = will
-    }
-    override suspend fun removeWill(mqttsnClient: MQTTSNClient) {
-        willMutex.withLock {
-            willsByClient.remove(mqttsnClient)
-            pendingWillTopics.remove(mqttsnClient)
-        }
-    }
 }
