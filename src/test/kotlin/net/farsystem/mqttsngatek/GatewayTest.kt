@@ -1,9 +1,7 @@
 package net.farsystem.mqttsngatek
 
 import kotlinx.coroutines.test.runTest
-import net.farsystem.mqttsngatek.data.repository.InMemoryMQTTClientRepository
-import net.farsystem.mqttsngatek.data.repository.InMemoryMQTTSNClientRepository
-import net.farsystem.mqttsngatek.data.repository.InMemoryMQTTSNTopicRepository
+import net.farsystem.mqttsngatek.data.repository.*
 import net.farsystem.mqttsngatek.gateway.DefaultMQTTSNGateway
 import net.farsystem.mqttsngatek.gateway.MQTTSNGateway
 import net.farsystem.mqttsngatek.mqtt.*
@@ -59,6 +57,10 @@ class GatewayTest {
 
     private val mqttsnTopicRepository = InMemoryMQTTSNTopicRepository(emptyMap())
 
+    private val mqttsnPublishRepository = InMemoryMQTTSNPublishRepository()
+
+    private val mqttsnWillRepository: MQTTSNWillRepository = InMemoryMQTTSNWillRepository()
+
 //    private val mqttClientRepository = InMemoryMQTTClientRepository(
 //        gatewayConfig,
 //    ) { clientId, host, port ->
@@ -86,6 +88,7 @@ class GatewayTest {
             mqttsnMessageBuilder,
             mqttsnClientRepository,
             mqttsnTopicRepository,
+            mqttsnPublishRepository,
             outgoingProcessor
         )
 
@@ -95,6 +98,8 @@ class GatewayTest {
             mqttsnClientRepository,
             mqttClientRepository,
             mqttsnTopicRepository,
+            mqttsnWillRepository,
+            mqttsnPublishRepository,
             publishHandler,
             outgoingProcessor
         )

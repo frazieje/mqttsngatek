@@ -36,6 +36,10 @@ class Gateway {
                 emptyMap()
             )
 
+            val mqttsnPublishRepository: MQTTSNPublishRepository = InMemoryMQTTSNPublishRepository()
+
+            val mqttsnWillRepository: MQTTSNWillRepository = InMemoryMQTTSNWillRepository()
+
             val outgoingProcessor: MQTTSNMessageProcessor = OutgoingMQTTSNMessageProcessor(
                 transport
             )
@@ -44,6 +48,7 @@ class Gateway {
                 messageBuilder,
                 mqttsnClientRepository,
                 mqttsnTopicRepository,
+                mqttsnPublishRepository,
                 outgoingProcessor
             )
 
@@ -53,6 +58,8 @@ class Gateway {
                 mqttsnClientRepository,
                 mqttClientRepository,
                 mqttsnTopicRepository,
+                mqttsnWillRepository,
+                mqttsnPublishRepository,
                 mqttPublishHandler,
                 outgoingProcessor
             )

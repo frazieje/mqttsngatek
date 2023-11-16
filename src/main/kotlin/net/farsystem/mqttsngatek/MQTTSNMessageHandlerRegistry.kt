@@ -1,8 +1,6 @@
 package net.farsystem.mqttsngatek
 
-import net.farsystem.mqttsngatek.data.repository.MQTTClientRepository
-import net.farsystem.mqttsngatek.data.repository.MQTTSNClientRepository
-import net.farsystem.mqttsngatek.data.repository.MQTTSNTopicRepository
+import net.farsystem.mqttsngatek.data.repository.*
 import net.farsystem.mqttsngatek.gateway.*
 import net.farsystem.mqttsngatek.gateway.handler.*
 import net.farsystem.mqttsngatek.mqtt.MQTTPublishHandler
@@ -13,6 +11,8 @@ class MQTTSNMessageHandlerRegistry(
     mqttsnClientRepository: MQTTSNClientRepository,
     mqttClientRepository: MQTTClientRepository,
     mqttsnTopicRepository: MQTTSNTopicRepository,
+    mqttsnWillRepository: MQTTSNWillRepository,
+    mqttsnPublishRepository: MQTTSNPublishRepository,
     publishHandler: MQTTPublishHandler,
     outgoingProcessor: MQTTSNMessageProcessor,
 ) {
@@ -22,6 +22,7 @@ class MQTTSNMessageHandlerRegistry(
             messageBuilder,
             mqttsnClientRepository,
             mqttClientRepository,
+            mqttsnWillRepository,
             outgoingProcessor
         ),
         MQTTSNMessageType.PINGREQ to MQTTSNPingReqHandler(
@@ -79,6 +80,35 @@ class MQTTSNMessageHandlerRegistry(
         MQTTSNMessageType.PINGRESP to MQTTSNPingRespHandler(
             mqttsnClientRepository,
             mqttClientRepository
+        ),
+        MQTTSNMessageType.REGACK to MQTTSNRegAckHandler(
+            messageBuilder,
+            mqttsnClientRepository,
+            mqttsnPublishRepository,
+            outgoingProcessor
+        ),
+        MQTTSNMessageType.PINGREQ to MQTTSNPingReqHandler(
+            messageBuilder,
+            mqttsnClientRepository,
+            mqttClientRepository,
+            outgoingProcessor
+        ),
+        MQTTSNMessageType.PINGRESP to MQTTSNPingRespHandler(
+            mqttsnClientRepository,
+            mqttClientRepository
+        ),
+        MQTTSNMessageType.WILLMSG to MQTTSNWillMsgHandler(
+            messageBuilder,
+            mqttsnClientRepository,
+            mqttsnWillRepository,
+            mqttClientRepository,
+            outgoingProcessor
+        ),
+        MQTTSNMessageType.WILLTOPIC to MQTTSNWillTopicHandler(
+            messageBuilder,
+            mqttsnClientRepository,
+            mqttsnWillRepository,
+            outgoingProcessor
         )
     )
     fun register(messageType: MQTTSNMessageType, handler: MQTTSNMessageHandler) = handlers.set(messageType, handler)
