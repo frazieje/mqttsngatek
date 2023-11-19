@@ -171,14 +171,27 @@ class GatewayTest {
 //        Thread.sleep(60000)
 //    }
 //
-//    @Test
-//    fun `MQTTSN Register is processed`() {
-//        val client = NativeMQTTSNClient()
-//        val bytes = client.serializeRegister(4832, 4440, "someNewTopic")
-//        val buf = Buffers.wrap(cxn.transport.memoryManager, bytes)
-//        cxn.write(buf)
-//        Thread.sleep(60000)
-//    }
+    @Test
+    fun `MQTTSN Register is processed`() = runTest {
+        val client = NativeMQTTSNClient()
+        var bytes = client.serializeConnect("mqttsnClient", 10, true, false)
+        var buf = Buffers.wrap(cxn.transport.memoryManager, bytes)
+        val expectedConnAck = MQTTConnack(MQTTReturnCode.ACCEPTED, false)
+        fakeMQTTClient.queueResponse(expectedConnAck)
+        cxn.write(buf)
+        var response = captureFilter.getLastRead()
+        val connAck = client.deserializeConnAck(response)
+        assertEquals(MQTTSNReturnCode.ACCEPTED.code, connAck.returnCode)
+        val expectedRegMsgId = 5678
+        bytes = client.serializeRegister(expectedRegMsgId, "someNewTopic")
+        buf = Buffers.wrap(cxn.transport.memoryManager, bytes)
+        cxn.write(buf)
+        response = captureFilter.getLastRead()
+        val regAck = client.deserializeRegAck(response)
+        assertEquals(expectedRegMsgId, regAck.messageId)
+        assertEquals(MQTTSNReturnCode.ACCEPTED.code, regAck.returnCode)
+        assertTrue(regAck.topicId > 0)
+    }
 
     @Test
     fun `MQTTSN SearchGW is processed`() = runTest {
