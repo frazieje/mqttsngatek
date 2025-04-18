@@ -9,13 +9,6 @@ version '1.0-SNAPSHOT'
 
 repositories {
     mavenCentral()
-    maven {
-        url "https://www.spoohapps.com/artifactory/libs-release-local"
-        credentials {
-            username = artifactory_username
-            password = artifactory_password
-        }
-    }
 }
 
 dependencies {
